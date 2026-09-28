@@ -13,12 +13,14 @@ export default function SubHeader({ filtroActual, setFiltroActual, busqueda, set
             {/* titulo de la pantalla e indicadores globales */}
             <div className="d-flex justify-content-between align-items-center mt-1 mb-3">
                 <div>
-                    <h2 className="h4 fw-bold mb-1">Listado de SOlicitudes de Evaluación</h2>
+                    <h2 className="h4 fw-bold mb-1">Listado de Solicitudes de Evaluación</h2>
                     <p className="text-muted small mb-0">Control y seguimiento del estado de los procesos psicolaborales activos.</p>
                 </div>
 
                 {/* metricas de estado rápido */}
                 <div className="d-flex gap-2">
+
+            
                     <span className="badge bg-light text-dark border p-2 fw-normal">☑ 48 Procesos</span>
                     <span className="badge bg-light text-dark border p-2 fw-normal">96.4% Cumplimiento SLA</span>
 
@@ -39,9 +41,50 @@ export default function SubHeader({ filtroActual, setFiltroActual, busqueda, set
 
                     </button>
 
-                    <button></button>
+                    <button
+                        className={`btn btn-sm ${filtroActual === 'Pendiente' ? 'btn-white shadow-sm fw-bold' : 'btn-light text-muted'}`}
+                        onClick={() => setFiltroActual('Pendiente')}
+                    >
+                        Pendientes <span className="badge bg-warning text-dark ms-1">15</span>
+
+                    </button>
+                    
+                    <button
+                        className={`btn btn-sm ${filtroActual === 'En proceso' ? 'btn-white shadow-sm fw-bold' : 'btn-light text-muted'}`}
+                        onClick={() => setFiltroActual('En proceso') }
+                    >
+                        En proceso <span className="badge bg-info text-dark ms-1">12</span>
+
+                    </button>
+
+                    <button
+                        className={`btn btn-sm ${filtroActual === 'Finalizada' ? 'btn-white shadow-sm fw-bold' : 'btn-light text-muted'}`}
+                        onClick={() => setFiltroActual('Finalizada')}
+                    >
+                        Finalizadas <span className="badge bg-success ms-1">21</span>
+
+                    </button>
 
                 </div>
+
+                {/* Campo de entrada para filtrar texto e ingresar una nueva solicitud */}
+                <div className="d-flex gap-2">
+                    <input
+                        type="text"
+                        className="form-control form-control-sm bg-light"
+                        placeholder="🔍︎ Buscar candidato, RUT o cargo..."
+                        value={busqueda}
+                        onChange={(e) => setBusqueda(e.target.value)} //actualiza el estado de la busqueda
+                        style={{ width: '260px'}}
+                    />
+                    <button className="btn btn-sm btn-primary fw-bold px-3">
+                        + Nueva Solicitud
+
+                    </button>
+
+                </div>
+
+
             </div>
 
             

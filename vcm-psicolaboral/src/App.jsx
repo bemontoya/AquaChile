@@ -1,122 +1,60 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import React, { useState } from 'react';
+import Navbar from './components/Navbar';
+import SubHeader from './components/SubHeader';
+import SolicitudesTabla from './components/SolicitudesTabla';
+import { solicitudesIniciales } from './data/solicitudesData';
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+  // Estado para mantener la lista original de solicitudes
+  //Contiene la lista completa con todas las solicitudes del sistema
+  const [solicitudes] = useState(solicitudesIniciales);
+
+  // Estado para el filtro por estado selecionado ('Todos', 'Pendiente', 'En proceso', 'Finalizada')
+  // Guarda el filtro por estado seleccionado(Por defecto en 'Todos')
+  const [filtroActual, setFiltroActual] = useState('Todos');
+
+  // Estado para el texto escrito en el buscador
+  //Guarda el texto escrito por el usuaario en la barra de busqueda(Por defecto está vacío '')
+  const [busqueda, setBusqueda] = useState('');
+
+  // Lógica de filtrado en tiempo real
+  const solicitudesFiltradas = solicitudes.filter((item) => {
+    // Verifica si coincide el estado seleccionado
+    const coincideEstado = filtroActual === 'Todos' || item.estado === filtroActual;
+    
+    // Verifica si la búsqueda coincide con el nombre del candidato, cargo o rut
+    const coincideBusqueda = 
+      item.candidato.toLowerCase().includes(busqueda.toLowerCase()) ||
+      item.cargo.toLowerCase().includes(busqueda.toLowerCase()) ||
+      item.rut.includes(busqueda);
+
+    return coincideEstado && coincideBusqueda;
+  });
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="bg-light min-vh-100">
+      {/* 1. Navbar Superior */}
+      <Navbar />
+      
+      {/* 2. Contenido Principal */}
+      <main className="container-fluid px-4 py-4" style={{ maxWidth: '1300px' }}>
+        {/* Encabezado con controles de búsqueda y filtros */}
+        {/* Se pasa el estado de la busqueda y los filtros para que los botones de la interfaz puedan leer y modificar esos valores */}
+        <SubHeader 
+          filtroActual={filtroActual} 
+          setFiltroActual={setFiltroActual}
+          busqueda={busqueda}
+          setBusqueda={setBusqueda}
+        />
+        
+        {/* Tabla con la información filtrada */}
+        <SolicitudesTabla solicitudes={solicitudesFiltradas} />
+      </main>
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      {/* Pie de pagina */}
+      <footer className="text-center text-muted py-3 border-top mt-5 small bg-white">
+        © 2024 AquaChile S.A. — Sistema Interno de Evaluación Psicolaboral. Confidencial.
+      </footer>
+    </div>
+  );
 }
-
-export default App
