@@ -62,10 +62,10 @@ export default function SubHeader({ filtroActual, setFiltroActual, busqueda, set
                     <input
                         type="text"
                         className="form-control form-control-sm bg-light"
-                        placeholder="🔍︎ Buscar candidato, RUT o cargo..."
+                        placeholder="🔍︎ Buscar candidato por RUT o cargo"
                         value={busqueda}
-                        onChange={(e) => setBusqueda(e.target.value)} // Actualiza el estado de la búsqueda
-                        style={{ minWidth: '220px' }}
+                        onChange={(e) => setBusqueda(e.target.value)} // actualiza el estado de la búsqueda
+                        style={{ minWidth: '250px' }}
                     />
                     <button className="btn btn-sm btn-primary fw-bold px-3 text-nowrap">
                         + Nueva Solicitud

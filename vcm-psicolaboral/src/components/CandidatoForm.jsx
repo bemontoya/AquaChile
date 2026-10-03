@@ -71,19 +71,6 @@ export default function CandidatoForm({ onCancelar }) {
         <div className="card-body p-4">
           <form onSubmit={handleSubmit}>
 
-            {/* mensaje Informativo sobre la privacidad */}
-            <div className="alert alert-light border d-flex align-items-start gap-3 mb-4 rounded-3 p-3">
-              <i className="bi bi-lock-fill fs-4 text-primary mt-1"></i>
-              <div>
-                <strong className="d-block text-dark small fw-bold mb-1">
-                  Tratamiento de Datos Estrictamente Confidencial
-                </strong>
-                <p className="mb-0 text-muted small">
-                  La información registrada será vinculada de forma segura con las pruebas psicométricas de AquaChile conforme a las normativas vigentes de protección al postulante.
-                </p>
-              </div>
-            </div>
-
             {/* bloque de datos personales y contacto del postulante */}
             <h6 className="fw-bold mb-3 d-flex align-items-center gap-2 text-dark">
               <i className="bi bi-person-fill text-primary"></i> Datos Personales y Contacto
