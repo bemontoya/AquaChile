@@ -18,8 +18,7 @@ export default function SubHeader({ filtroActual, setFiltroActual, busqueda, set
 
                 {/* Métricas de estado rápido */}
                 <div className="d-flex gap-2 flex-wrap">
-                    <span className="badge bg-light text-dark border p-2 fw-normal">✔ 48 Procesos</span>
-                    <span className="badge bg-light text-dark border p-2 fw-normal">96.4% Cumplimiento SLA</span>
+                    <span className="badge bg-light text-dark border p-2 fw-normal">48 Procesos</span>
                 </div>
             </div>
 
