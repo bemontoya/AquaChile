@@ -78,7 +78,7 @@ export default function CandidatoForm({ onCancelar }) {
 
             <div className="row g-3 mb-4">
               {/* campo de nombre completo */}
-              <div className="col-12">
+              <div className="col-md-6">
                 <label className="form-label small fw-semibold">
                   Nombre completo <span className="text-danger">*</span>
                 </label>

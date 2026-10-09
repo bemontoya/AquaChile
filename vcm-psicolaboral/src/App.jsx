@@ -47,6 +47,7 @@ export default function App() {
               busqueda={busqueda}
               setBusqueda={setBusqueda}
               onNuevaSolicitud={() => setVistaActual('candidatos')}
+              solicitudes={solicitudes} // Pasamos las solicitudes al SubHeader para contar los estados
             />
             <SolicitudesTabla solicitudes={solicitudesFiltradas} />
           </>

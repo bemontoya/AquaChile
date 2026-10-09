@@ -9,10 +9,16 @@ export default function Navbar({ vistaActual, setVistaActual }){
                 {/* Logo de la empresa (Redirige a Solicitudes) */}
                 <a 
                   className="navbar-brand d-flex align-items-center me-4" 
-                  href="#solicitudes"
-                  onClick={(e) => { e.preventDefault(); setVistaActual('solicitudes'); }}
+                  href="#dashboard"
+                  onClick={(e) => { e.preventDefault(); setVistaActual('dashboard'); }}
                 >
-                    <span className="fw-bold text-primary fs-5 me-1">AquaChile</span>
+                    <img
+                        src="/Logo-Aqua.png"
+                        alt="Logo AquaChile"
+                        width="150"
+                        className="me-2"
+                        style={{objectFit: 'contain'}}
+                    />
                     <span className="text-secondary fs-6 fw-normal ms-1">PSICOLABORAL</span>
                 </a>
 

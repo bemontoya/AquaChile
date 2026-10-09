@@ -1,7 +1,12 @@
 import React from 'react';
 
 // Se reciben propiedades desde App.jsx para controlar los filtros y la búsqueda
-export default function SubHeader({ filtroActual, setFiltroActual, busqueda, setBusqueda }) {
+export default function SubHeader({ filtroActual, setFiltroActual, busqueda, setBusqueda, solicitudes }) {
+    const contar=(estado)=>solicitudes.filter((s)=>s.estado===estado).length; // función para contar la cantidad de solicitudes por estado
+    const total=solicitudes.length; // total de solicitudes
+    const pendientes=contar('Pendiente'); // cantidad de solicitudes pendientes
+    const enProceso=contar('En proceso'); // cantidad de solicitudes en proceso
+    const finalizadas=contar('Finalizada'); // cantidad de solicitudes finalizadas
     return (
         <div className="mb-4">
             {/* Subtítulo */}
@@ -18,7 +23,7 @@ export default function SubHeader({ filtroActual, setFiltroActual, busqueda, set
 
                 {/* Métricas de estado rápido */}
                 <div className="d-flex gap-2 flex-wrap">
-                    <span className="badge bg-light text-dark border p-2 fw-normal">48 Procesos</span>
+                    <span className="badge bg-light text-dark border p-2 fw-normal">{total} Procesos</span>
                 </div>
             </div>
 
@@ -31,28 +36,28 @@ export default function SubHeader({ filtroActual, setFiltroActual, busqueda, set
                         className={`btn btn-sm ${filtroActual === 'Todos' ? 'btn-white shadow-sm fw-bold' : 'btn-light text-muted'}`}
                         onClick={() => setFiltroActual('Todos')}
                     >
-                        Todos <span className="badge bg-secondary ms-1">48</span>
+                        Todos <span className="badge bg-secondary ms-1">{total}</span>
                     </button>
 
                     <button
                         className={`btn btn-sm ${filtroActual === 'Pendiente' ? 'btn-white shadow-sm fw-bold' : 'btn-light text-muted'}`}
                         onClick={() => setFiltroActual('Pendiente')}
                     >
-                        Pendientes <span className="badge bg-warning text-dark ms-1">15</span>
+                        Pendientes <span className="badge bg-warning text-dark ms-1">{pendientes}</span>
                     </button>
                     
                     <button
                         className={`btn btn-sm ${filtroActual === 'En proceso' ? 'btn-white shadow-sm fw-bold' : 'btn-light text-muted'}`}
                         onClick={() => setFiltroActual('En proceso')}
                     >
-                        En proceso <span className="badge bg-info text-dark ms-1">12</span>
+                        En proceso <span className="badge bg-info text-dark ms-1">{enProceso}</span>
                     </button>
 
                     <button
                         className={`btn btn-sm ${filtroActual === 'Finalizada' ? 'btn-white shadow-sm fw-bold' : 'btn-light text-muted'}`}
                         onClick={() => setFiltroActual('Finalizada')}
                     >
-                        Finalizadas <span className="badge bg-success ms-1">21</span>
+                        Finalizadas <span className="badge bg-success ms-1">{finalizadas}</span>
                     </button>
                 </div>
 
