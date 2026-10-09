@@ -6,7 +6,7 @@ export default function Navbar({ vistaActual, setVistaActual }){
         <nav className="navbar navbar-expand bg-white border-bottom px-2 px-md-4 py-2 shadow-sm">
             <div className="container-fluid d-flex justify-content-between align-items-center flex-wrap">
 
-                {/* Logo de la empresa (Redirige a Solicitudes) */}
+                {/* Logo de la empresa (Redirige a Dashboard) */}
                 <a 
                   className="navbar-brand d-flex align-items-center me-4" 
                   href="#dashboard"

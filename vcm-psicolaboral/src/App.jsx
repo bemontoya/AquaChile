@@ -32,7 +32,7 @@ export default function App() {
       {/* renderizado dinámico de la vista elegida */}
       <main className="container-fluid px-4 py-4 flex-grow-1" style={{ maxWidth: '1300px' }}>
         {vistaActual === 'dashboard' && (
-          <Dashboard setVistaActual={setVistaActual} />
+          <Dashboard setVistaActual={setVistaActual} solicitudes={solicitudes} />
         )}
 
         {vistaActual === 'candidatos' && (
