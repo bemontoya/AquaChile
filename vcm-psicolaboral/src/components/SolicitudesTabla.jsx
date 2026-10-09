@@ -23,21 +23,21 @@ export default function SolicitudesTabla({ solicitudes }) {
     if (estado === 'Finalizada') {
       // Texto simple sin borde para Ver Detalle
       return (
-        <button className="btn btn-link btn-sm text-decoration-none text-succes p-0 border-0 align-baseline fw-medium">
+        <button className="btn btn-link btn-sm text-decoration-none text-success p-0 border-0 align-baseline fw-medium">
           Ver Detalle <i className="bi bi-eye ms-1"></i>
         </button>
       );
     } else if (estado === 'En proceso') {
       // Botón delineado azul para Evaluar
       return (
-        <button className="btn btn-link btn-sm text-decoration-none text-succes p-0 border-0 align-baseline fw-medium">
+        <button className="btn btn-link btn-sm text-decoration-none text-primary p-0 border-0 align-baseline fw-medium">
           Evaluar <i className="bi bi-pencil-square ms-1"></i>
         </button>
       );
     } else {
       // Botón delineado amarillo/naranja para Iniciar Evaluación
       return (
-        <button className="btn btn-link btn-sm text-decoration-none text-succes p-0 border-0 align-baseline fw-medium">
+        <button className="btn btn-link btn-sm text-decoration-none text-warning-emphasis p-0 border-0 align-baseline fw-medium">
           Iniciar Evaluación <i className="bi bi-play-fill ms-1"></i>
         </button>
       );
