@@ -1,7 +1,10 @@
+//useState sirve para que el componente pueda recordar valores
 import React, { useState } from 'react';
 
 export default function CandidatosTabla({ candidatos, onNuevoCandidato }) {
+  //texto que el usuario escribe en el buscador
   const [busqueda, setBusqueda] = useState('');
+  //familia de cargo seleccionada para filtrar, empieza en "Todos" para mostrar todos los candidatos
   const [filtroFamilia, setFiltroFamilia] = useState('Todos');
 
   // Filtrado dinámico por búsqueda o familia de cargo
@@ -12,18 +15,19 @@ export default function CandidatosTabla({ candidatos, onNuevoCandidato }) {
       item.cargo.toLowerCase().includes(busqueda.toLowerCase()) ||
       item.rut.includes(busqueda);
 
+      //el candidato se muestra si coincide con la familia de cargo seleccionada y si coincide con el texto escrito en el buscador
     return coincideFamilia && coincideBusqueda;
   });
 
   return (
+    //ancho 100% para que la tabla se adapte al tamaño del contenedor
     <div className="w-100">
       
-      {/* 1. Miga de pan / Breadcrumb */}
       <div className="text-muted small mb-1 text-uppercase fw-semibold" style={{ fontSize: '0.75rem', letterSpacing: '0.5px' }}>
         GESTIÓN DE PERSONAS &gt; RECLUTAMIENTO Y SELECCIÓN
       </div>
 
-      {/* 2. Encabezado principal con métricas superiores */}
+      {/* encabezado principal con métricas superiores */}
       <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
         <div>
           <h2 className="h3 fw-bold mb-1 text-dark">Listado de Candidatos</h2>
@@ -44,7 +48,6 @@ export default function CandidatosTabla({ candidatos, onNuevoCandidato }) {
         </div>
       </div>
 
-      {/* 3. Barra de Controles: Buscador, Exportar y Botón Registrar */}
       <div className="d-flex flex-column flex-md-row justify-content-between align-items-stretch align-items-md-center gap-3 mb-3">
         
         {/* Buscador */}
@@ -75,12 +78,13 @@ export default function CandidatosTabla({ candidatos, onNuevoCandidato }) {
 
       </div>
 
-      {/* 4. Barra de Filtro Rápido */}
+      {/* Barra de Filtro Rápido */}
       <div className="p-2 mb-3 bg-light rounded-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
         <div className="d-flex align-items-center gap-2 flex-wrap">
           <span className="fw-bold text-secondary small text-uppercase me-2" style={{ fontSize: '0.75rem' }}>
             FILTRO RÁPIDO:
           </span>
+          {/* se usa .map para crear un boton para cada elemento */}
           {[
             { id: 'Todos', label: 'Todos (148)' },
             { id: 'Operaciones y Producción', label: 'Operaciones y Producción' },
@@ -90,11 +94,15 @@ export default function CandidatosTabla({ candidatos, onNuevoCandidato }) {
             <button
               key={item.id}
               type="button"
+              //si el boton es el filtro activo se pinta azul, si no se pinta gris
+              //se usa className para cambiar el estilo del boton dependiendo si es el filtro activo o no
+              //uso de operador ternario para cambiar la clase del boton dependiendo si es el filtro activo o no
               className={`btn btn-sm ${
                 filtroFamilia === item.id 
                   ? 'btn-primary fw-semibold' 
                   : 'btn-light border text-secondary'
               }`}
+              //al hacer click en el boton se cambia el estado del filtroFamilia al id del boton clickeado
               onClick={() => setFiltroFamilia(item.id)}
             >
               {item.label}
@@ -106,7 +114,7 @@ export default function CandidatosTabla({ candidatos, onNuevoCandidato }) {
         </div>
       </div>
 
-      {/* 5. Tabla de Candidatos */}
+      {/* Tabla de Candidatos */}
       <div className="card border-0 shadow-sm rounded-3 mb-3 overflow-hidden">
         <div className="table-responsive">
           <table className="table table-hover align-middle mb-0">
@@ -142,6 +150,8 @@ export default function CandidatosTabla({ candidatos, onNuevoCandidato }) {
                     </div>
                   </td>
 
+
+                  {/* etiqueta td para el mini texto */}
                   {/* Correo Electrónico */}
                   <td className="text-secondary small">{item.email}</td>
 
@@ -204,14 +214,6 @@ export default function CandidatosTabla({ candidatos, onNuevoCandidato }) {
               </li>
             </ul>
           </nav>
-        </div>
-      </div>
-
-      {/* 6. Banner de Cumplimiento Ley de Protección de Datos */}
-      <div className="alert alert-light border d-flex align-items-center gap-3 rounded-3 p-3 text-muted small mb-0">
-        <i className="bi bi-shield-check fs-4 text-primary"></i>
-        <div>
-          <strong className="text-dark">Cumplimiento Ley 19.628 de Protección de Datos Personales:</strong> La información contenida en este registro maestro de postulaciones es de uso estrictamente confidencial para los procesos de evaluación psicolaboral y selección de personal de AquaChile S.A. Queda prohibida su reproducción o distribución fuera del departamento de Recursos Humanos.
         </div>
       </div>
 
