@@ -1,12 +1,19 @@
 import React from 'react';
 
 // Se reciben propiedades desde App.jsx para controlar los filtros y la búsqueda
-export default function SubHeader({ filtroActual, setFiltroActual, busqueda, setBusqueda, solicitudes }) {
-    const contar=(estado)=>solicitudes.filter((s)=>s.estado===estado).length; // función para contar la cantidad de solicitudes por estado
-    const total=solicitudes.length; // total de solicitudes
-    const pendientes=contar('Pendiente'); // cantidad de solicitudes pendientes
-    const enProceso=contar('En proceso'); // cantidad de solicitudes en proceso
-    const finalizadas=contar('Finalizada'); // cantidad de solicitudes finalizadas
+export default function SubHeader({ 
+  filtroActual, 
+  setFiltroActual, 
+  busqueda, 
+  setBusqueda, 
+  solicitudes = [] // <- Se agrega valor por defecto para evitar errores si llega undefined
+}) {
+    const contar = (estado) => solicitudes.filter((s) => s.estado === estado).length; 
+    const total = solicitudes.length; 
+    const pendientes = contar('Pendiente'); 
+    const enProceso = contar('En proceso'); 
+    const finalizadas = contar('Finalizada'); 
+
     return (
         <div className="mb-4">
             {/* Subtítulo */}
@@ -14,7 +21,7 @@ export default function SubHeader({ filtroActual, setFiltroActual, busqueda, set
                 GESTIÓN DEL TALENTO ACUÍCOLA • Región de Los Lagos & Aysén
             </small>
 
-            {/* Título de la pantalla e indicadores globales (responsivos) */}
+            {/* Título de la pantalla e indicadores globales */}
             <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2 mb-3">
                 <div>
                     <h2 className="h4 fw-bold mb-1">Listado de Solicitudes de Evaluación</h2>
@@ -27,7 +34,7 @@ export default function SubHeader({ filtroActual, setFiltroActual, busqueda, set
                 </div>
             </div>
 
-            {/* Filtros y buscador (se apilan en móviles y se alinean en escritorio) */}
+            {/* Filtros y buscador */}
             <div className="d-flex flex-column flex-lg-row justify-content-between align-items-stretch align-items-lg-center gap-3 pt-2">
 
                 {/* Grupo de botones para cambiar el filtro */}
@@ -68,7 +75,7 @@ export default function SubHeader({ filtroActual, setFiltroActual, busqueda, set
                         className="form-control form-control-sm bg-light"
                         placeholder="🔍︎ Buscar candidato por RUT o cargo"
                         value={busqueda}
-                        onChange={(e) => setBusqueda(e.target.value)} // actualiza el estado de la búsqueda
+                        onChange={(e) => setBusqueda(e.target.value)}
                         style={{ minWidth: '250px' }}
                     />
                     <button className="btn btn-sm btn-primary fw-bold px-3 text-nowrap">

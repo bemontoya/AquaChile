@@ -2,18 +2,24 @@ import React, { useState } from 'react';
 import Navbar from './components/Navbar';
 import SubHeader from './components/SubHeader';
 import SolicitudesTabla from './components/SolicitudesTabla';
-import CandidatoForm from './components/CandidatoForm';
-import Dashboard from './components/Dashboard'; // Importamos el Dashboard
+import CandidatosTabla from './components/CandidatosTabla';
+import RegistroCandidato from './components/RegistroCandidato';
+import Dashboard from './components/Dashboard';
+
 import { solicitudesIniciales } from './data/solicitudesData';
+import { candidatosIniciales } from './data/candidatosData';
 
 export default function App() {
-  // estado para controlar la pestaña activa ('dashboard', 'candidatos' o 'solicitudes')
-  const [vistaActual, setVistaActual] = useState('dashboard');
+  // Pestaña inicial: 'candidatos'
+  const [vistaActual, setVistaActual] = useState('candidatos');
 
   const [solicitudes] = useState(solicitudesIniciales);
+  const [candidatos] = useState(candidatosIniciales);
+
   const [filtroActual, setFiltroActual] = useState('Todos');
   const [busqueda, setBusqueda] = useState('');
 
+  // Filtrado de solicitudes por búsqueda y estado
   const solicitudesFiltradas = solicitudes.filter((item) => {
     const coincideEstado = filtroActual === 'Todos' || item.estado === filtroActual;
     const coincideBusqueda = 
@@ -26,19 +32,35 @@ export default function App() {
 
   return (
     <div className="bg-light min-vh-100 d-flex flex-column">
-      {/* Navbar con control de pestañas */}
+      {/* 1. Navbar con los 4 botones principales */}
       <Navbar vistaActual={vistaActual} setVistaActual={setVistaActual} />
       
-      {/* renderizado dinámico de la vista elegida */}
+      {/* 2. Área principal dinámica */}
       <main className="container-fluid px-4 py-4 flex-grow-1" style={{ maxWidth: '1300px' }}>
+        
+        {/* Vista: Dashboard */}
         {vistaActual === 'dashboard' && (
-          <Dashboard setVistaActual={setVistaActual} solicitudes={solicitudes} />
+          <Dashboard 
+            setVistaActual={setVistaActual}
+            solicitudes={solicitudes}
+          
+          />
         )}
 
+        {/* Vista: Candidatos (Listado/Tabla) */}
         {vistaActual === 'candidatos' && (
-          <CandidatoForm onCancelar={() => setVistaActual('solicitudes')} />
+          <CandidatosTabla 
+            candidatos={candidatos} 
+            onNuevoCandidato={() => setVistaActual('nuevo_candidato')} 
+          />
         )}
 
+        {/* Vista: Registro Candidatos (Formulario) */}
+        {vistaActual === 'nuevo_candidato' && (
+          <RegistroCandidato onCancelar={() => setVistaActual('candidatos')} />
+        )}
+
+        {/* Vista: Solicitudes (Abre la tabla de solicitudes) */}
         {vistaActual === 'solicitudes' && (
           <>
             <SubHeader 
@@ -46,15 +68,15 @@ export default function App() {
               setFiltroActual={setFiltroActual}
               busqueda={busqueda}
               setBusqueda={setBusqueda}
-              onNuevaSolicitud={() => setVistaActual('candidatos')}
-              solicitudes={solicitudes} // Pasamos las solicitudes al SubHeader para contar los estados
+              solicitudes={solicitudes}
             />
             <SolicitudesTabla solicitudes={solicitudesFiltradas} />
           </>
         )}
+
       </main>
 
-      {/* pie de página dinámico */}
+      {/* Pie de página corporativo */}
       <footer className="text-center text-muted py-3 border-top bg-white small mt-auto d-flex justify-content-between px-4">
         <span>© 2024 AquaChile S.A. — Sistema Interno de Evaluación Psicolaboral. Confidencial.</span>
         <span>Servidor Central Puerto Montt <span className="text-success">•</span></span>

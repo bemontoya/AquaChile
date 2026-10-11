@@ -37,7 +37,7 @@ export default function CandidatoForm({ onCancelar }) {
       
       {/* 1. ruta de navegación */}
       <div className="text-muted small mb-2 d-flex align-items-center gap-1" style={{ fontSize: '0.8rem' }}>
-        <i className="bi bi-folder2-open"></i> Candidatos / <span className="fw-semibold text-dark">Registrar Nuevo Candidato</span>
+        <i className="bi bi-folder2-open"></i> Registro Candidato / <span className="fw-semibold text-dark">Registrar Nuevo Candidato</span>
       </div>
 
       {/* 2. título principal de la pantalla */}

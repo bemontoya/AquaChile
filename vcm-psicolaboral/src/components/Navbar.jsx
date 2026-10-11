@@ -37,7 +37,7 @@ export default function Navbar({ vistaActual, setVistaActual }){
                             </a>
                         </li>
 
-                        {/* Pestaña Candidatos */}
+                        {/* Pestaña Candidatos (Abre la tabla de candidatos) */}
                         <li className="nav-item">
                             <a 
                               className={`nav-link ${vistaActual === 'candidatos' ? 'fw-bold text-dark border-bottom border-primary border-2 active' : 'text-secondary'}`} 
@@ -45,6 +45,17 @@ export default function Navbar({ vistaActual, setVistaActual }){
                               onClick={(e) => { e.preventDefault(); setVistaActual('candidatos'); }}
                             >
                               Candidatos
+                            </a>
+                        </li>
+
+                        {/* Pestaña Registro Candidatos (Abre el formulario de registro) */}
+                        <li className="nav-item">
+                            <a 
+                              className={`nav-link ${vistaActual === 'nuevo_candidato' ? 'fw-bold text-dark border-bottom border-primary border-2 active' : 'text-secondary'}`} 
+                              href="#registro-candidato"
+                              onClick={(e) => { e.preventDefault(); setVistaActual('nuevo_candidato'); }}
+                            >
+                              Registro Candidatos
                             </a>
                         </li>
 
