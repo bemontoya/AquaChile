@@ -2,12 +2,19 @@ import React from 'react';
 import GraficoPorArea from './GraficoPorArea';
 
 // Recibimos 'setVistaActual' y 'solicitudes' como props para redirigir al usuario y mostrar datos
-export default function Dashboard({ setVistaActual, solicitudes = [] }) {
-  const totalCandidatos = new Set(solicitudes.map((s) => s.rut)).size; // candidatos únicos por RUT
+export default function Dashboard({ setVistaActual, solicitudes = [], candidatos = [] }) {
   const pendientes = solicitudes.filter((s) => s.estado === 'Pendiente').length;
   const enProceso = solicitudes.filter((s) => s.estado === 'En proceso').length;
   const finalizadas = solicitudes.filter((s) => s.estado === 'Finalizada').length;
   const activas = pendientes + enProceso;
+  const prioritarias = solicitudes.filter((s) => s.estado !== 'Finalizada').slice(-4).reverse();
+  const ultimosCandidatos = candidatos.slice(-3).reverse();
+
+  const claseEstado = (estado) => {
+    if (estado === 'Finalizada') return 'bg-light text-secondary border fw-medium small';
+    if (estado === 'En proceso') return 'bg-primary-subtle text-primary fw-medium small';
+    return 'bg-warning-subtle text-warning-emphasis border fw-medium small';
+  };
 
   return (
     <div className="w-100">
@@ -38,10 +45,10 @@ export default function Dashboard({ setVistaActual, solicitudes = [] }) {
           <div className="card border-0 shadow-sm rounded-3 p-3 h-100">
             <div className="d-flex justify-content-between align-items-start mb-2">
               <span className="text-muted fw-bold small text-uppercase" style={{ fontSize: '0.7rem' }}>
-                Total Candidatos
+                Total Solicitudes
               </span>
             </div>
-            <div className="h2 fw-bold text-dark mb-0">{totalCandidatos}</div>
+            <div className="h2 fw-bold text-dark mb-0">{solicitudes.length}</div>
           </div>
         </div>
 
@@ -133,77 +140,25 @@ export default function Dashboard({ setVistaActual, solicitudes = [] }) {
 
               {/* lista de solicitudes recientes */}
               <div className="d-flex flex-column gap-2 mb-3">
-
-                {/* evaluación 1 */}
-                <div className="d-flex justify-content-between align-items-center p-2 rounded border bg-light-subtle">
-                  <div>
-                    <div className="fw-bold text-dark small">
-                      SOL-2026-089 <span className="fw-normal text-muted">• Piscicultura Quellón</span>
+                {prioritarias.map((s) => (
+                  <div key={s.id} className='d-flex justify-content-between align-items-center p-2 rounded border bg-light-subtle'>
+                    <div>
+                      <div className='fw-bold text-dark small'>{s.id}<span className='fw-normal text-muted'>• {s.area}</span>
+                      </div>
+                      <div className='text-muted small' style={{ fontSize: '0.75rem' }}>Psic. {s.evaluador} • {s.cargo}
+                      </div>
                     </div>
-                    <div className="text-muted small" style={{ fontSize: '0.75rem' }}>
-                      Psic. Asignado: Claudio Arriagada • Test DISC
-                    </div>
+                    <span className={`badge rounded-pill fw-semibold px-3 py-1 ${claseEstado(s.estado)}`}>{s.estado}</span>
                   </div>
-                  <span
-                    className="badge rounded-pill fw-semibold px-3 py-1"
-                    style={{
-                      backgroundColor: '#fff3cd',
-                      color: '#856404',
-                      border: '1px solid #ffebaa',
-                      fontSize: '0.75rem'
-                    }}
-                  >
-                    Pendiente
-                  </span>
-                </div>
-
-                {/* evaluación 2 */}
-                <div className="d-flex justify-content-between align-items-center p-2 rounded border bg-light-subtle">
-                  <div>
-                    <div className="fw-bold text-dark small">
-                      SOL-2026-088 <span className="fw-normal text-muted">• Logística Puerto Montt</span>
-                    </div>
-                    <div className="text-muted small" style={{ fontSize: '0.75rem' }}>
-                      Psic. Asignada: Dra. Marcela Vidal • Entrevista por Competencias
-                    </div>
-                  </div>
-                  <span className="badge bg-primary-subtle text-primary fw-medium small">En Proceso</span>
-                </div>
-
-                {/* evaluación 3 */}
-                <div className="d-flex justify-content-between align-items-center p-2 rounded border bg-light-subtle">
-                  <div>
-                    <div className="fw-bold text-dark small">
-                      SOL-2026-084 <span className="fw-normal text-muted">• Operaciones Calbuco</span>
-                    </div>
-                    <div className="text-muted small" style={{ fontSize: '0.75rem' }}>
-                      Psic. Asignada: Claudia Rios • Informe Psicolaboral Emitido
-                    </div>
-                  </div>
-                  <span className="badge bg-light text-secondary border fw-medium small">Finalizada</span>
-                </div>
-
-                {/* evaluación 4 */}
-                <div className="d-flex justify-content-between align-items-center p-2 rounded border bg-light-subtle">
-                  <div>
-                    <div className="fw-bold text-dark small">
-                      SOL-2026-081 <span className="fw-normal text-muted">• Centro de Cultivo Melinka</span>
-                    </div>
-                    <div className="text-muted small" style={{ fontSize: '0.75rem' }}>
-                      Psic. Asignado: Claudio Arriagada • Test DISC
-                    </div>
-                  </div>
-                  <span className="badge bg-primary-subtle text-primary fw-medium small">En Proceso</span>
-                </div>
-
+                ))}
               </div>
             </div>
 
             {/* boton modulo solicitudes */}
-            <div className="card-footer bg-transparent border-0 p-3 pt-0">
+            <div className="card-footer bg-transparent border-0 p-3 pt-0 d-flex justify-content-center">
               <button
                 type="button"
-                className="btn w-100 text-white fw-semibold d-flex align-items-center justify-content-center gap-2"
+                className="btn btn-sm text-white fw-semibold d-flex align-items-center justify-content-center gap-2"
                 style={{ backgroundColor: '#0d3c61', borderColor: '#0d3c61' }}
                 onClick={() => setVistaActual('solicitudes')}
               >
@@ -260,65 +215,35 @@ export default function Dashboard({ setVistaActual, solicitudes = [] }) {
                 <span className="fw-bold text-muted small text-uppercase" style={{ fontSize: '0.7rem' }}>
                   Últimos Candidatos Agregados
                 </span>
-                <span className="text-muted small">Total activos: <strong>{totalCandidatos}</strong></span>
+                <span className="text-muted small">Total activos: <strong>{candidatos.length}</strong></span>
               </div>
 
               {/* lista de candidatos */}
               <div className="d-flex flex-column gap-2 mb-3">
-
-                <div className="d-flex justify-content-between align-items-center p-2 rounded border bg-light-subtle">
-                  <div className="d-flex align-items-center gap-2">
-                    <div className="bg-secondary-subtle text-secondary fw-bold rounded-circle d-flex align-items-center justify-content-center" style={{ width: '38px', height: '38px' }}>
-                      <i className="bi bi-person-fill fs-5"></i>
-                    </div>
-                    <div>
-                      <div className="fw-bold text-dark small">Tomás Sanhueza Muñoz</div>
-                      <div className="text-muted small" style={{ fontSize: '0.75rem' }}>
-                        RUT: 18.421.905-2 • Jefe de Turno Planta Chinquihue
+                  {ultimosCandidatos.map((c) => (
+                    <div key={c.id} className='d-flex justify-content-between align-items-center p-2 rounded border bg-light-subtle'>
+                      <div className='d-flex align-items-center gap-2'>
+                        <div className='bg-primary-subtle text-primary fw-bold rounded-circle d-flex align-items-center justify-content-center' style={{ width: '38px', height: '38px' }}>
+                          {c.iniciales}
+                        </div>
+                        <div>
+                          <div className='fw-bold text-dark small'>{c.nombre}</div>
+                          <div className='text-muted small' style={{ fontSize: '0.75rem' }}>
+                            RUT: {c.rut} • {c.cargo}
+                          </div>
+                        </div>
                       </div>
+                      <span className='badge bg-light text-secondary border fw-normal small'>{c.ubicacion}</span>
                     </div>
-                  </div>
-                  <span className="badge bg-light text-dark border fw-normal small">Hace 2h</span>
-                </div>
-
-                <div className="d-flex justify-content-between align-items-center p-2 rounded border bg-light-subtle">
-                  <div className="d-flex align-items-center gap-2">
-                    <div className="bg-secondary-subtle text-secondary fw-bold rounded-circle d-flex align-items-center justify-content-center" style={{ width: '38px', height: '38px' }}>
-                      <i className="bi bi-person-fill fs-5"></i>
-                    </div>
-                    <div>
-                      <div className="fw-bold text-dark small">Camila Valenzuela Pérez</div>
-                      <div className="text-muted small" style={{ fontSize: '0.75rem' }}>
-                        RUT: 19.104.382-K • Analista de Aseguramiento Calidad
-                      </div>
-                    </div>
-                  </div>
-                  <span className="badge bg-light text-dark border fw-normal small">Ayer</span>
-                </div>
-
-                <div className="d-flex justify-content-between align-items-center p-2 rounded border bg-light-subtle">
-                  <div className="d-flex align-items-center gap-2">
-                    <div className="bg-secondary-subtle text-secondary fw-bold rounded-circle d-flex align-items-center justify-content-center" style={{ width: '38px', height: '38px' }}>
-                      <i className="bi bi-person-fill fs-5"></i>
-                    </div>
-                    <div>
-                      <div className="fw-bold text-dark small">Esteban Morales Leal</div>
-                      <div className="text-muted small" style={{ fontSize: '0.75rem' }}>
-                        RUT: 16.789.214-4 • Técnico en Mantención Frío
-                      </div>
-                    </div>
-                  </div>
-                  <span className="badge bg-light text-dark border fw-normal small">2 días</span>
-                </div>
-
+                  ))}
               </div>
             </div>
 
             {/* botón módulo candidatos */}
-            <div className="card-footer bg-transparent border-0 p-3 pt-0">
+            <div className="card-footer bg-transparent border-0 p-3 pt-0 d-flex justify-content-center">
               <button
                 type="button"
-                className="btn w-100 text-white fw-semibold d-flex align-items-center justify-content-center gap-2"
+                className="btn btn-sm text-white fw-semibold d-flex align-items-center justify-content-center gap-2"
                 style={{ backgroundColor: '#0d3c61', borderColor: '#0d3c61' }}
                 onClick={() => setVistaActual('candidatos')}
               >

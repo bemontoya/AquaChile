@@ -49,7 +49,7 @@ export default function App() {
           <Dashboard 
             setVistaActual={setVistaActual}
             solicitudes={solicitudes}
-          
+            candidatos={candidatos}
           />
         )}
 
