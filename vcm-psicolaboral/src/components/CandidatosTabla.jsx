@@ -1,5 +1,6 @@
 //useState sirve para que el componente pueda recordar valores
 import React, { useState } from 'react';
+import { FAMILIAS_CANDIDATOS } from '../data/catalogos';
 
 export default function CandidatosTabla({ candidatos, onNuevoCandidato }) {
   //texto que el usuario escribe en el buscador
@@ -41,7 +42,7 @@ export default function CandidatosTabla({ candidatos, onNuevoCandidato }) {
           <div className="card border-0 shadow-sm px-3 py-2 d-flex flex-row align-items-center gap-3 rounded-3 bg-white">
             <i className="bi bi-person-workspace text-primary fs-4"></i>
             <div>
-              <div className="fw-bold h5 mb-0 text-dark">148</div>
+              <div className="fw-bold h5 mb-0 text-dark">{candidatos.length}</div>
               <div className="text-muted small" style={{ fontSize: '0.75rem' }}>Postulantes Totales</div>
             </div>
           </div>
@@ -86,10 +87,8 @@ export default function CandidatosTabla({ candidatos, onNuevoCandidato }) {
           </span>
           {/* se usa .map para crear un boton para cada elemento */}
           {[
-            { id: 'Todos', label: 'Todos (148)' },
-            { id: 'Operaciones y Producción', label: 'Operaciones y Producción' },
-            { id: 'Calidad y Medioambiente', label: 'Calidad y Medioambiente' },
-            { id: 'Mantenimiento e Ingeniería', label: 'Mantenimiento e Ingeniería' }
+            { id: 'Todos', label: `Todos (${candidatos.length})` },
+            ...FAMILIAS_CANDIDATOS.map((familia) => ({id:familia, label: familia}))
           ].map((item) => (
             <button
               key={item.id}
@@ -194,7 +193,7 @@ export default function CandidatosTabla({ candidatos, onNuevoCandidato }) {
         {/* Pie de Tabla / Paginación */}
         <div className="card-footer bg-white border-top py-3 px-4 d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
           <div className="text-muted small">
-            Mostrando <strong>1 a {candidatosFiltrados.length}</strong> de <strong>148</strong> candidatos
+            Mostrando <strong>1 a {candidatosFiltrados.length}</strong> de <strong>{candidatos.length}</strong> candidatos
           </div>
 
           <nav aria-label="Navegación de páginas">
@@ -205,12 +204,8 @@ export default function CandidatosTabla({ candidatos, onNuevoCandidato }) {
               <li className="page-item active">
                 <span className="page-link" style={{ backgroundColor: '#0d3c61', borderColor: '#0d3c61' }}>1</span>
               </li>
-              <li className="page-item"><a className="page-link text-secondary" href="#2">2</a></li>
-              <li className="page-item"><a className="page-link text-secondary" href="#3">3</a></li>
-              <li className="page-item disabled"><span className="page-link">...</span></li>
-              <li className="page-item"><a className="page-link text-secondary" href="#30">30</a></li>
-              <li className="page-item">
-                <a className="page-link text-secondary" href="#siguiente">Siguiente &gt;</a>
+              <li className='page-item disabled'>
+                <span className='page-link'>Siguiente &gt;</span>
               </li>
             </ul>
           </nav>
