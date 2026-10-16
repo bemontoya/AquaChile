@@ -66,7 +66,7 @@ export default function SubHeader({
                     </button>
                 </div>
 
-                {/* Campo de entrada para filtrar e ingresar nueva solicitud */}
+                {/* Campo de entrada para filtrar */}
                 <div className="d-flex flex-column flex-sm-row gap-2">
                     <input
                         type="text"
@@ -76,9 +76,6 @@ export default function SubHeader({
                         onChange={(e) => setBusqueda(e.target.value)}
                         style={{ minWidth: '250px' }}
                     />
-                    <button className="btn btn-sm btn-primary fw-bold px-3 text-nowrap">
-                        + Nueva Solicitud
-                    </button>
                 </div>
 
             </div>
