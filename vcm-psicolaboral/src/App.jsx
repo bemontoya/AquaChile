@@ -14,7 +14,7 @@ export default function App() {
   const [vistaActual, setVistaActual] = useState('candidatos');
 
   const [solicitudes] = useState(solicitudesIniciales);
-  const [candidatos] = useState(candidatosIniciales);
+  const [candidatos, setCandidatos] = useState(candidatosIniciales);
 
   const [filtroActual, setFiltroActual] = useState('Todos');
   const [busqueda, setBusqueda] = useState('');
@@ -29,6 +29,12 @@ export default function App() {
 
     return coincideEstado && coincideBusqueda;
   });
+
+  //Agrega un candidato nuevo al estado y vuelve al lsitado
+  const agregarCandidato = (nuevoCandidato) => {
+    setCandidatos((prev) => [...prev, nuevoCandidato]);
+    setVistaActual('candidatos');
+  }
 
   return (
     <div className="bg-light min-vh-100 d-flex flex-column">
@@ -57,7 +63,10 @@ export default function App() {
 
         {/* Vista: Registro Candidatos (Formulario) */}
         {vistaActual === 'nuevo_candidato' && (
-          <RegistroCandidato onCancelar={() => setVistaActual('candidatos')} />
+          <RegistroCandidato 
+            onAgregar={agregarCandidato}
+            onCancelar={() => setVistaActual('candidatos')} 
+          />
         )}
 
         {/* Vista: Solicitudes (Abre la tabla de solicitudes) */}

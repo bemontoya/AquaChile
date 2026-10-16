@@ -35,3 +35,12 @@ export const CATEGORIAS_EVALUADO = [
 ];
 
 export const ESTADOS = ['Pendiente', 'En proceso', 'Finalizada'];
+
+//Familias usadas en el lsitado de Candidatos (deben coincidir con candidatosData.js)
+export const FAMILIAS_CANDIDATOS = [
+  'Operaciones y Producción',
+  'Calidad y Medioambiente',
+  'Mantenimiento e Ingeniería',
+  'Administración y Finanzas',
+  'Recursos Humanos'
+];
