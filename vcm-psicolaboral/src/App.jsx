@@ -10,8 +10,8 @@ import { solicitudesIniciales } from './data/solicitudesData';
 import { candidatosIniciales } from './data/candidatosData';
 
 export default function App() {
-  // Pestaña inicial: 'candidatos'
-  const [vistaActual, setVistaActual] = useState('candidatos');
+  // Pestaña inicial: 'dashboard'
+  const [vistaActual, setVistaActual] = useState('dashboard');
 
   const [solicitudes] = useState(solicitudesIniciales);
   const [candidatos, setCandidatos] = useState(candidatosIniciales);
