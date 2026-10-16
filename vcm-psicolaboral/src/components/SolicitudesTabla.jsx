@@ -1,5 +1,3 @@
-import React from 'react';
-
 export default function SolicitudesTabla({ solicitudes }) {
   
   // Se asignan clases de color a las etiquetas de estado

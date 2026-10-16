@@ -1,5 +1,3 @@
-import React from 'react';
-
 // Recibimos las propiedades desde App.jsx para saber qué pestaña está activa y cambiarla
 export default function Navbar({ vistaActual, setVistaActual }){
     return(

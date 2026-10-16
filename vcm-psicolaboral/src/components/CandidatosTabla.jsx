@@ -1,5 +1,4 @@
-//useState sirve para que el componente pueda recordar valores
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { FAMILIAS_CANDIDATOS } from '../data/catalogos';
 
 export default function CandidatosTabla({ candidatos, onNuevoCandidato }) {
@@ -88,7 +87,7 @@ export default function CandidatosTabla({ candidatos, onNuevoCandidato }) {
           {/* se usa .map para crear un boton para cada elemento */}
           {[
             { id: 'Todos', label: `Todos (${candidatos.length})` },
-            ...FAMILIAS_CANDIDATOS.map((familia) => ({id:familia, label: familia}))
+            ...FAMILIAS_CANDIDATOS.map((familia) => ({ id:familia, label: familia }))
           ].map((item) => (
             <button
               key={item.id}

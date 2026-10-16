@@ -1,4 +1,3 @@
-import React from 'react';
 import GraficoPorArea from './GraficoPorArea';
 
 // Recibimos 'setVistaActual' y 'solicitudes' como props para redirigir al usuario y mostrar datos

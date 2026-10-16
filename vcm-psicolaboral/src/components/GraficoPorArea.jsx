@@ -17,12 +17,13 @@ export default function GraficoPorArea({ solicitudes = [] }) {
         }))
         .sort((a, b) => b.cantidad - a.cantidad); // ordenamos de mayor a menor
 
-    // Armamos el conic-gradient con cortes acumulados (sin redondear, para no dejar espacios)
-    let acumulado = 0;
+    // Armamos el conic-gradient con cortes acumulados (sin mutar variables)
+    const porcentajes = filas.map((fila) => (fila.cantidad/total)*100);
+    const acumulados = porcentajes.map((_, i) => porcentajes.slice(0, i+1).reduce((a,b) => a + b ,0));
     const segmentos = filas.map((fila, i) => {
-        const inicio = acumulado;
-        acumulado += (fila.cantidad / total) * 100;
-        return `${PALETA[i % PALETA.length]} ${inicio}% ${acumulado}%`;
+        const fin = acumulados[i];
+        const inicio = i === 0 ? 0 : acumulados [i-1];
+        return `${PALETA[i % PALETA.length]} ${inicio}% ${fin}%`
     });
     const gradiente = `conic-gradient(${segmentos.join(', ')})`;
 

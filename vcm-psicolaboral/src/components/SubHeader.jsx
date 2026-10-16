@@ -1,5 +1,3 @@
-import React from 'react';
-
 // Se reciben propiedades desde App.jsx para controlar los filtros y la búsqueda
 export default function SubHeader({ 
   filtroActual, 
