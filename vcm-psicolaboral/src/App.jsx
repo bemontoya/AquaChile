@@ -5,6 +5,7 @@ import SolicitudesTabla from './components/SolicitudesTabla';
 import CandidatosTabla from './components/CandidatosTabla';
 import RegistroCandidato from './components/RegistroCandidato';
 import Dashboard from './components/Dashboard';
+import KanbanSolicitudes from './components/KanbanSolicitudes'
 
 import { solicitudesIniciales } from './data/solicitudesData';
 import { candidatosIniciales } from './data/candidatosData';
@@ -13,11 +14,12 @@ export default function App() {
   // Pestaña inicial: 'dashboard'
   const [vistaActual, setVistaActual] = useState('dashboard');
 
-  const [solicitudes] = useState(solicitudesIniciales);
+  const [solicitudes, setSolicitudes] = useState(solicitudesIniciales);
   const [candidatos, setCandidatos] = useState(candidatosIniciales);
 
   const [filtroActual, setFiltroActual] = useState('Todos');
   const [busqueda, setBusqueda] = useState('');
+  const [modoSolicitudes, setModoSolicitudes] = useState('kanban');
 
   // Filtrado de solicitudes por búsqueda y estado
   const solicitudesFiltradas = solicitudes.filter((item) => {
@@ -34,7 +36,12 @@ export default function App() {
   const agregarCandidato = (nuevoCandidato) => {
     setCandidatos((prev) => [...prev, nuevoCandidato]);
     setVistaActual('candidatos');
-  }
+  };
+
+  // Cambia el estado de una solicitud al soltarla en otra columna del kanban
+  const moverSolicitud = (id,nuevoEstado) => {
+    setSolicitudes((prev) => prev.map((s) => (s.id === id ? {...s, estado: nuevoEstado } : s)))
+  };
 
   return (
     <div className="bg-light min-vh-100 d-flex flex-column">
@@ -69,17 +76,36 @@ export default function App() {
           />
         )}
 
-        {/* Vista: Solicitudes (Abre la tabla de solicitudes) */}
+        {/* Vista: Solicitudes (Kanban/Tabla) */}
         {vistaActual === 'solicitudes' && (
           <>
             <SubHeader 
-              filtroActual={filtroActual} 
+              filtroActual={filtroActual}
               setFiltroActual={setFiltroActual}
               busqueda={busqueda}
               setBusqueda={setBusqueda}
               solicitudes={solicitudes}
-            />
-            <SolicitudesTabla solicitudes={solicitudesFiltradas} />
+              />
+
+              <div className='d-flex justify-content-end gap-2 mb-3'>
+                <button 
+                  className={`btn btn-sm ${modoSolicitudes === 'tabla' ? 'btn-primary' : 'btn-light border'}`}
+                  onClick={() => setModoSolicitudes('tabla')}
+                >
+                  <i className='bi bi-table me-1'></i> Tabla  
+                </button>
+                <button
+                  className={`btn btn-sm ${modoSolicitudes === 'kanban' ? 'btn-primary' : 'btn-light border'}`}
+                  onClick={() => setModoSolicitudes('kanban')}
+                >
+                  <i className='bi bi-kanban me-1'></i> Kanban
+                </button>
+              </div>
+
+              {modoSolicitudes === 'tabla' 
+                ? <SolicitudesTabla solicitudes={solicitudesFiltradas}/>
+                : <KanbanSolicitudes solicitudes={solicitudes} busqueda={busqueda} onMover={moverSolicitud}/>
+              }
           </>
         )}
 
