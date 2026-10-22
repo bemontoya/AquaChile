@@ -89,7 +89,7 @@ export default function Dashboard({ setVistaActual, solicitudes = [], candidatos
                 Finalizadas
               </span>
               <span className="badge bg-success-subtle text-success rounded-pill fw-medium small">
-                <i className="bi bi-check-circle me-1"></i> Completas
+                <i className="bi bi-check-circle me-1"></i> • Completas
               </span>
             </div>
             <div className="h2 fw-bold text-dark mb-0">{finalizadas}</div>
@@ -117,7 +117,31 @@ export default function Dashboard({ setVistaActual, solicitudes = [], candidatos
                     className="rounded d-inline-flex align-items-center justify-content-center text-white"
                     style={{ backgroundColor: '#0d3c61', width: '38px', height: '38px' }}
                   >
-                    <i className="bi bi-check2-square fs-5"></i>
+
+
+
+                    <svg
+                      width ="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#82b1ff"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      {/* cuerpo del portapapeles */}
+                      <rect x="4" y="5" width="16" height="16" rx="2" />
+                      {/* clip */}
+                      <path d="M9 5V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                      {/* check  */}
+                      <polyline points="9 13 11 15 15 10" />
+
+
+
+                    </svg>  
+
+                    
                   </span>
                   <span style={{ color: '#0d3c61' }} className="fw-bold">
                     Gestión de Solicitudes
