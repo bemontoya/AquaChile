@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { Routes, Route, useNavigate } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import Dashboard from './components/Dashboard'
-import SolicitudesTabla from './components/SolicitudesTabla'
+import KanbanSolicitudes from './components/KanbanSolicitudes' // Importamos tu Kanban
 import SubHeader from './components/SubHeader'
 import CandidatosTabla from './components/CandidatosTabla'
 import RegistroCandidato from './components/RegistroCandidato'
@@ -29,12 +29,11 @@ export default function App() {
   // Función para agregar un nuevo candidato
   const handleGuardarCandidato = (nuevoCandidato) => {
     setCandidatos([nuevoCandidato, ...candidatos])
-    navigate('/candidatos') // Redirige automáticamente a la tabla de candidatos
+    navigate('/candidatos')
   }
 
   return (
     <div className="min-vh-100 bg-light">
-      {/* El Navbar ahora usará Links para la navegación */}
       <Navbar />
 
       <main className="container-fluid px-4 py-4">
@@ -44,8 +43,12 @@ export default function App() {
             path="/" 
             element={<Dashboard solicitudes={solicitudes} candidatos={candidatos} />} 
           />
+          <Route 
+            path="/dashboard" 
+            element={<Dashboard solicitudes={solicitudes} candidatos={candidatos} />} 
+          />
 
-          {/* Ruta de Solicitudes */}
+          {/* Ruta de Solicitudes con el tablero Kanban y Drag and Drop */}
           <Route
             path="/solicitudes"
             element={
@@ -57,7 +60,10 @@ export default function App() {
                   setBusqueda={setBusqueda}
                   solicitudes={solicitudes}
                 />
-                <SolicitudesTabla solicitudes={solicitudesFiltradas} />
+                <KanbanSolicitudes 
+                  solicitudes={solicitudesFiltradas} 
+                  setSolicitudes={setSolicitudes} 
+                />
               </>
             }
           />

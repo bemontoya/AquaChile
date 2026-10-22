@@ -3,44 +3,83 @@ import { NavLink } from 'react-router-dom';
 
 export default function Navbar() {
   return (
-    <nav className="navbar navbar-expand-lg navbar-dark shadow-sm" style={{ backgroundColor: '#0d3c61' }}>
-      <div className="container-fluid px-4">
-        <NavLink className="navbar-brand fw-bold d-flex align-items-center gap-2" to="/">
-          <span className="bg-white text-primary rounded px-2 py-1 fs-6 fw-extrabold" style={{ color: '#0d3c61' }}>
-            AC
-          </span>
-          AquaChile | Evaluaciones Psicolaborales
+    <nav className="navbar navbar-expand bg-white border-bottom px-2 px-md-4 py-2 shadow-sm">
+      <div className="container-fluid d-flex justify-content-between align-items-center flex-wrap">
+
+        {/* Logo de la empresa (Redirige a Dashboard) */}
+        <NavLink 
+          className="navbar-brand d-flex align-items-center me-4" 
+          to="/dashboard"
+        >
+          <img
+            src="/Logo-Aqua.png"
+            alt="Logo AquaChile"
+            width="150"
+            className="me-2"
+            style={{ objectFit: 'contain' }}
+          />
+          <span className="text-secondary fs-6 fw-normal ms-1">PSICOLABORAL</span>
         </NavLink>
 
-        <div className="navbar-nav ms-auto d-flex flex-row gap-3">
-          <NavLink 
-            to="/" 
-            className={({ isActive }) => `nav-link fw-semibold ${isActive ? 'active border-bottom border-2 border-white' : ''}`}
-          >
-            Dashboard
-          </NavLink>
+        {/* Menú de navegación */}
+        <div className="collapse navbar-collapse">
+          <ul className="navbar-nav me-auto mb-2 mb-lg-0">
+            
+            {/* Pestaña Dashboard */}
+            <li className="nav-item">
+              <NavLink 
+                className={({ isActive }) => 
+                  `nav-link ${isActive ? 'fw-bold text-dark border-bottom border-primary border-2 active' : 'text-secondary'}`
+                } 
+                to="/dashboard"
+              >
+                Dashboard
+              </NavLink>
+            </li>
 
-          <NavLink 
-            to="/solicitudes" 
-            className={({ isActive }) => `nav-link fw-semibold ${isActive ? 'active border-bottom border-2 border-white' : ''}`}
-          >
-            Solicitudes
-          </NavLink>
+            {/* Pestaña Candidatos */}
+            <li className="nav-item">
+              <NavLink 
+                className={({ isActive }) => 
+                  `nav-link ${isActive ? 'fw-bold text-dark border-bottom border-primary border-2 active' : 'text-secondary'}`
+                } 
+                to="/candidatos"
+              >
+                Candidatos
+              </NavLink>
+            </li>
 
-          <NavLink 
-            to="/candidatos" 
-            className={({ isActive }) => `nav-link fw-semibold ${isActive ? 'active border-bottom border-2 border-white' : ''}`}
-          >
-            Candidatos
-          </NavLink>
+            {/* Pestaña Solicitudes */}
+            <li className="nav-item">
+              <NavLink 
+                className={({ isActive }) => 
+                  `nav-link ${isActive ? 'fw-bold text-dark border-bottom border-primary border-2 active' : 'text-secondary'}`
+                } 
+                to="/solicitudes"
+              >
+                Solicitudes
+              </NavLink>
+            </li>
 
-          <NavLink 
-            to="/registro-candidato" 
-            className={({ isActive }) => `btn btn-sm btn-light fw-bold ms-2 text-dark d-flex align-items-center gap-1 ${isActive ? 'shadow' : ''}`}
-          >
-            + Registrar Candidato
-          </NavLink>
+          </ul>
+
+          {/* Perfil del usuario */}
+          <div className="d-flex align-items-center gap-2">
+            <div className="text-end me-2">
+              <div className="fw-bold small"> Dra. Marcela Vidal </div>
+              <div className="text-muted small" style={{ fontSize: '0.75rem' }}>Evaluadora RRHH</div>
+            </div>
+
+            <div 
+              className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold"
+              style={{ width: '36px', height: '36px' }}
+            >
+              MV
+            </div>
+          </div>
+
         </div>
+
       </div>
     </nav>
   );

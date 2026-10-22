@@ -1,10 +1,14 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FAMILIAS_CANDIDATOS } from '../data/catalogos';
 
-export default function CandidatosTabla({ candidatos, onNuevoCandidato }) {
-  //texto que el usuario escribe en el buscador
+export default function CandidatosTabla({ candidatos }) {
+  // Hook de navegación de React Router
+  const navigate = useNavigate();
+
+  // Texto que el usuario escribe en el buscador
   const [busqueda, setBusqueda] = useState('');
-  //familia de cargo seleccionada para filtrar, empieza en "Todos" para mostrar todos los candidatos
+  // Familia de cargo seleccionada para filtrar
   const [filtroFamilia, setFiltroFamilia] = useState('Todos');
 
   // Filtrado dinámico por búsqueda o familia de cargo
@@ -15,19 +19,17 @@ export default function CandidatosTabla({ candidatos, onNuevoCandidato }) {
       item.cargo.toLowerCase().includes(busqueda.toLowerCase()) ||
       item.rut.includes(busqueda);
 
-      //el candidato se muestra si coincide con la familia de cargo seleccionada y si coincide con el texto escrito en el buscador
     return coincideFamilia && coincideBusqueda;
   });
 
   return (
-    //ancho 100% para que la tabla se adapte al tamaño del contenedor
     <div className="w-100">
       
       <div className="text-muted small mb-1 text-uppercase fw-semibold" style={{ fontSize: '0.75rem', letterSpacing: '0.5px' }}>
         GESTIÓN DE PERSONAS &gt; RECLUTAMIENTO Y SELECCIÓN
       </div>
 
-      {/* encabezado principal con métricas superiores */}
+      {/* Encabezado principal */}
       <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
         <div>
           <h2 className="h3 fw-bold mb-1 text-dark">Listado de Candidatos</h2>
@@ -36,7 +38,7 @@ export default function CandidatosTabla({ candidatos, onNuevoCandidato }) {
           </p>
         </div>
 
-        {/* Métrica de resumen rápido */}
+        {/* Métrica de resumen */}
         <div className="d-flex gap-3">
           <div className="card border-0 shadow-sm px-3 py-2 d-flex flex-row align-items-center gap-3 rounded-3 bg-white">
             <i className="bi bi-person-workspace text-primary fs-4"></i>
@@ -64,15 +66,15 @@ export default function CandidatosTabla({ candidatos, onNuevoCandidato }) {
           />
         </div>
 
-        {/* Botones de acción */}
+        {/* Botón de acción adaptado a React Router */}
         <div className="d-flex gap-2 justify-content-end">
           <button 
             type="button" 
             className="btn text-white px-4 fw-bold shadow-sm d-flex align-items-center gap-2"
             style={{ backgroundColor: '#0d3c61', borderColor: '#0d3c61' }}
-            onClick={onNuevoCandidato}
+            onClick={() => navigate('/registro-candidato')}
           >
-            <i className="bi bi-plus-lg"></i> + Registrar Nuevo Candidato
+            <i className="bi bi-plus-lg"></i>  Registrar Nuevo Candidato
           </button>
         </div>
 
@@ -84,23 +86,18 @@ export default function CandidatosTabla({ candidatos, onNuevoCandidato }) {
           <span className="fw-bold text-secondary small text-uppercase me-2" style={{ fontSize: '0.75rem' }}>
             FILTRO RÁPIDO:
           </span>
-          {/* se usa .map para crear un boton para cada elemento */}
           {[
             { id: 'Todos', label: `Todos (${candidatos.length})` },
-            ...FAMILIAS_CANDIDATOS.map((familia) => ({ id:familia, label: familia }))
+            ...FAMILIAS_CANDIDATOS.map((familia) => ({ id: familia, label: familia }))
           ].map((item) => (
             <button
               key={item.id}
               type="button"
-              //si el boton es el filtro activo se pinta azul, si no se pinta gris
-              //se usa className para cambiar el estilo del boton dependiendo si es el filtro activo o no
-              //uso de operador ternario para cambiar la clase del boton dependiendo si es el filtro activo o no
               className={`btn btn-sm ${
                 filtroFamilia === item.id 
                   ? 'btn-primary fw-semibold' 
                   : 'btn-light border text-secondary'
               }`}
-              //al hacer click en el boton se cambia el estado del filtroFamilia al id del boton clickeado
               onClick={() => setFiltroFamilia(item.id)}
             >
               {item.label}
@@ -130,7 +127,7 @@ export default function CandidatosTabla({ candidatos, onNuevoCandidato }) {
               {candidatosFiltrados.map((item) => (
                 <tr key={item.id}>
                   
-                  {/* Nombre completo con Avatar de Iniciales y RUT */}
+                  {/* Nombre completo y RUT */}
                   <td className="ps-4 py-3">
                     <div className="d-flex align-items-center gap-3">
                       <div 
@@ -148,15 +145,9 @@ export default function CandidatosTabla({ candidatos, onNuevoCandidato }) {
                     </div>
                   </td>
 
-
-                  {/* etiqueta td para el mini texto */}
-                  {/* Correo Electrónico */}
                   <td className="text-secondary small">{item.email}</td>
-
-                  {/* Teléfono */}
                   <td className="text-secondary small">{item.telefono}</td>
 
-                  {/* Cargo Postulación y Ubicación */}
                   <td>
                     <div className="d-flex align-items-center gap-2 flex-wrap">
                       <span className="text-dark small fw-medium">{item.cargo}</span>
@@ -166,7 +157,6 @@ export default function CandidatosTabla({ candidatos, onNuevoCandidato }) {
                     </div>
                   </td>
 
-                  {/* Familia de Cargo */}
                   <td>
                     <span className="badge bg-secondary-subtle text-dark border-0 fw-medium px-3 py-2 rounded-pill d-inline-flex align-items-center gap-2">
                       <span className="bg-primary rounded-circle" style={{ width: '6px', height: '6px' }}></span>
@@ -174,7 +164,6 @@ export default function CandidatosTabla({ candidatos, onNuevoCandidato }) {
                     </span>
                   </td>
 
-                  {/* Acciones */}
                   <td className="text-end pe-4">
                     <div className="d-flex gap-1 justify-content-end">
                       <button type="button" className="btn btn-sm btn-light border text-secondary me-1">
@@ -189,7 +178,7 @@ export default function CandidatosTabla({ candidatos, onNuevoCandidato }) {
           </table>
         </div>
 
-        {/* Pie de Tabla / Paginación */}
+        {/* Pie de Tabla */}
         <div className="card-footer bg-white border-top py-3 px-4 d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
           <div className="text-muted small">
             Mostrando <strong>1 a {candidatosFiltrados.length}</strong> de <strong>{candidatos.length}</strong> candidatos
@@ -203,8 +192,8 @@ export default function CandidatosTabla({ candidatos, onNuevoCandidato }) {
               <li className="page-item active">
                 <span className="page-link" style={{ backgroundColor: '#0d3c61', borderColor: '#0d3c61' }}>1</span>
               </li>
-              <li className='page-item disabled'>
-                <span className='page-link'>Siguiente &gt;</span>
+              <li className="page-item disabled">
+                <span className="page-link">Siguiente &gt;</span>
               </li>
             </ul>
           </nav>

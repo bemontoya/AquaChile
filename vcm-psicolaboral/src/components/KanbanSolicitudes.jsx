@@ -1,69 +1,101 @@
-import { useState } from 'react';
-import {
-    DndContext, DragOverlay, PointerSensor, useSensor, useSensors, useDroppable, useDraggable
-} from '@dnd-kit/core';
-import { ESTADOS } from '../data/catalogos';
+import React from 'react';
+import { DndContext, useDroppable, useDraggable } from '@dnd-kit/core';
 import TarjetaSolicitud from './TarjetaSolicitud';
 
-function TarjetaArrastrable({ solicitud }){
-    const  { attributes, listeners, setNodeRef, transform, isDragging} = useDraggable({ id: solicitud.id });
-    const style = transform ? {transform: `translate(${transform.x}px, ${transform.y}px)`, zIndex: 50} : undefined;
-    return(
-        <div ref={setNodeRef} style={style} {...listeners} {...attributes} 
-        className={isDragging ? 'opacity-50' : ''} role="button">
-        <TarjetaSolicitud solicitud={solicitud}/>
-        </div>
+// Mapeo o lista de columnas según los estados de tu aplicación
+const COLUMNAS = [
+  { id: 'Pendiente', titulo: 'PENDIENTE' },
+  { id: 'En proceso', titulo: 'EN PROCESO' },
+  { id: 'Finalizada', titulo: 'FINALIZADA' }
+];
+
+export default function KanbanSolicitudes({ solicitudes, setSolicitudes }) {
+  
+  // Función que se ejecuta al soltar la tarjeta
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+
+    // Si no se soltó sobre una columna válida, no hacemos nada
+    if (!over) return;
+
+    const tarjetaId = active.id;
+    // El ID de la columna destino (ej: 'En proceso', 'Finalizada', etc.)
+    const nuevoEstado = over.id;
+
+    // Actualizamos el estado global en App.jsx
+    setSolicitudes((prevSolicitudes) =>
+      prevSolicitudes.map((sol) => {
+        if (sol.id === tarjetaId) {
+          return { ...sol, estado: nuevoEstado };
+        }
+        return sol;
+      })
     );
+  };
+
+  return (
+    <DndContext onDragEnd={handleDragEnd}>
+      <div className="row g-3">
+        {COLUMNAS.map((col) => {
+          const tarjetasDeColumna = solicitudes.filter(
+            (s) => s.estado === col.id
+          );
+
+          return (
+            <ColumnaKanban
+              key={col.id}
+              id={col.id}
+              titulo={col.titulo}
+              cantidad={tarjetasDeColumna.length}
+            >
+              {tarjetasDeColumna.map((sol) => (
+                <TarjetaArrastrable key={sol.id} solicitud={sol} />
+              ))}
+            </ColumnaKanban>
+          );
+        })}
+      </div>
+    </DndContext>
+  );
 }
 
-function Columna({ estado, solicitudes}){
-    const { setNodeRef, isOver } = useDroppable({ id: estado });
-    return(
-        <div ref={setNodeRef} className={`p-2 rounded-3 h-100 ${isOver ? 'bg-primary-subtle' : 'bg-light'}`}>
-            <div className='d-flex justify-content-between align-items-center mb-2 px-1'>
-                <span className='fw-bold text-dark small text-uppercase'>{estado}</span>
-                <span className='badge bg-white text-secondary border'>{solicitudes.length}</span>
-            </div>
-            {solicitudes.map((s) => <TarjetaArrastrable key={s.id} solicitud={s}/>)}
-        </div>
-    );
+// Componente para la Columna (Zona Droppable)
+function ColumnaKanban({ id, titulo, cantidad, children }) {
+  const { setNodeRef, isOver } = useDroppable({ id });
+
+  return (
+    <div className="col-md-4">
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <span className="fw-bold text-uppercase small text-muted">{titulo}</span>
+        <span className="badge bg-white text-secondary border px-2 py-1">{cantidad}</span>
+      </div>
+      <div
+        ref={setNodeRef}
+        className={`p-2 rounded min-vh-50 ${isOver ? 'bg-light border border-primary' : ''}`}
+        style={{ minHeight: '500px' }}
+      >
+        {children}
+      </div>
+    </div>
+  );
 }
 
-export default function KanbanSolicitudes({ solicitudes = [], busqueda = '', onMover}){
-    const [activo, setActivo] = useState(null);
-    const sensors = useSensors(useSensor(PointerSensor, {activationConstraint: { distance: 5} }));
+// Componente para la Tarjeta (Elemento Draggable)
+function TarjetaArrastrable({ solicitud }) {
+  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+    id: solicitud.id,
+  });
 
-    const filtradas = solicitudes.filter((s) => 
-    s.candidato.toLowerCase().includes(busqueda.toLowerCase()) ||
-    s.rut.includes(busqueda) ||
-    s.cargo.toLowerCase().includes(busqueda.toLowerCase())
-    );
+  const style = transform
+    ? {
+        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+        zIndex: 999,
+      }
+    : undefined;
 
-    const handleDragStart = (e) => setActivo(filtradas.find((s) => s.id === e.active.id) || null);
-
-    const handleDragEnd = ({ active, over}) => {
-        setActivo(null);
-        if (!over || !onMover) return;
-        const sol = solicitudes.find((s) => s.id === active.id);
-        if (sol && sol.estado !== over.id) onMover(active.id, over.id);
-    };
-
-    return (
-        <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-            <div className='row g-3'>
-                {ESTADOS.map((estado) => (
-                    <div key={estado} className='col-12 col-lg-4'>
-                        <Columna estado={estado} solicitudes={filtradas.filter((s) => s.estado === estado)} />
-                    </div>
-                ))}
-            </div>
-            <DragOverlay>
-                {activo ? (
-                    <div style={{ transform: 'rotate(3deg)' }}>
-                        <TarjetaSolicitud solicitud={activo} />
-                    </div>
-                 ) : null}
-            </DragOverlay>
-        </DndContext>
-    );
+  return (
+    <div ref={setNodeRef} style={style} {...listeners} {...attributes} className="mb-3">
+      <TarjetaSolicitud solicitud={solicitud} />
+    </div>
+  );
 }

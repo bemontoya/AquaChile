@@ -32,12 +32,6 @@ export default function Dashboard({ solicitudes = [], candidatos = [] }) {
           <p className="text-muted small mb-0">Panel de control y métricas globales del proceso de selección</p>
         </div>
 
-        <div>
-          <span className="badge bg-light text-secondary border px-3 py-2 fw-normal d-flex align-items-center gap-2">
-            <span className="bg-primary rounded-circle d-inline-block" style={{ width: '8px', height: '8px' }}></span>
-            Última actualización hoy a las 08:30 hrs
-          </span>
-        </div>
       </div>
 
       {/* Métricas superiores */}
