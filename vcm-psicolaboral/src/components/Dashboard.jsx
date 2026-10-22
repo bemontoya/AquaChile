@@ -1,7 +1,11 @@
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import GraficoPorArea from './GraficoPorArea';
 
-// Recibimos 'setVistaActual' y 'solicitudes' como props para redirigir al usuario y mostrar datos
-export default function Dashboard({ setVistaActual, solicitudes = [], candidatos = [] }) {
+// Recibimos 'solicitudes' y 'candidatos' como props
+export default function Dashboard({ solicitudes = [], candidatos = [] }) {
+  const navigate = useNavigate();
+
   const pendientes = solicitudes.filter((s) => s.estado === 'Pendiente').length;
   const enProceso = solicitudes.filter((s) => s.estado === 'En proceso').length;
   const finalizadas = solicitudes.filter((s) => s.estado === 'Finalizada').length;
@@ -39,7 +43,7 @@ export default function Dashboard({ setVistaActual, solicitudes = [], candidatos
       {/* Métricas superiores */}
       <div className="row g-3 mb-4">
 
-        {/* Total candidatos */}
+        {/* Total Solicitudes */}
         <div className="col-12 col-sm-6 col-lg-3">
           <div className="card border-0 shadow-sm rounded-3 p-3 h-100">
             <div className="d-flex justify-content-between align-items-start mb-2">
@@ -89,7 +93,7 @@ export default function Dashboard({ setVistaActual, solicitudes = [], candidatos
                 Finalizadas
               </span>
               <span className="badge bg-success-subtle text-success rounded-pill fw-medium small">
-                <i className="bi bi-check-circle me-1"></i> • Completas
+                <i className="bi bi-check-circle me-1"></i> Completas
               </span>
             </div>
             <div className="h2 fw-bold text-dark mb-0">{finalizadas}</div>
@@ -101,12 +105,12 @@ export default function Dashboard({ setVistaActual, solicitudes = [], candidatos
       {/* Fila principal: gráfico por unidad + gestión de solicitudes */}
       <div className="row g-4 mb-4">
 
-        {/* gráfico de evaluaciones por unidad */}
+        {/* Gráfico de evaluaciones por unidad */}
         <div className="col-12 col-lg-5 order-2">
           <GraficoPorArea solicitudes={solicitudes} />
         </div>
 
-        {/* gestión de solicitudes */}
+        {/* Gestión de solicitudes */}
         <div className="col-12 col-lg-7 order-1">
           <div className="card border-0 shadow-sm rounded-3 h-100 d-flex flex-column">
 
@@ -117,11 +121,8 @@ export default function Dashboard({ setVistaActual, solicitudes = [], candidatos
                     className="rounded d-inline-flex align-items-center justify-content-center text-white"
                     style={{ backgroundColor: '#0d3c61', width: '38px', height: '38px' }}
                   >
-
-
-
                     <svg
-                      width ="20"
+                      width="20"
                       height="20"
                       viewBox="0 0 24 24"
                       fill="none"
@@ -130,18 +131,13 @@ export default function Dashboard({ setVistaActual, solicitudes = [], candidatos
                       strokeLinecap="round"
                       strokeLinejoin="round"
                     >
-                      {/* cuerpo del portapapeles */}
+                      {/* Cuerpo del portapapeles */}
                       <rect x="4" y="5" width="16" height="16" rx="2" />
-                      {/* clip */}
+                      {/* Clip */}
                       <path d="M9 5V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                      {/* check  */}
+                      {/* Check */}
                       <polyline points="9 13 11 15 15 10" />
-
-
-
                     </svg>  
-
-                    
                   </span>
                   <span style={{ color: '#0d3c61' }} className="fw-bold">
                     Gestión de Solicitudes
@@ -161,14 +157,14 @@ export default function Dashboard({ setVistaActual, solicitudes = [], candidatos
                 <span className="text-muted small"><strong>{activas}</strong> activas</span>
               </div>
 
-              {/* lista de solicitudes recientes */}
+              {/* Lista de solicitudes recientes */}
               <div className="d-flex flex-column gap-2 mb-3">
                 {prioritarias.map((s) => (
-                  <div key={s.id} className='d-flex justify-content-between align-items-center p-2 rounded border bg-light-subtle'>
+                  <div key={s.id} className="d-flex justify-content-between align-items-center p-2 rounded border bg-light-subtle">
                     <div>
-                      <div className='fw-bold text-dark small'>{s.id}<span className='fw-normal text-muted'>• {s.area}</span>
-                      </div>
-                      <div className='text-muted small' style={{ fontSize: '0.75rem' }}>Psic. {s.evaluador} • {s.cargo}
+                      <div className="fw-bold text-dark small">{s.id} <span className="fw-normal text-muted">• {s.area}</span></div>
+                      <div className="text-muted small" style={{ fontSize: '0.75rem' }}>
+                        Psic. {s.evaluador} • {s.cargo}
                       </div>
                     </div>
                     <span className={`badge rounded-pill fw-semibold px-3 py-1 ${claseEstado(s.estado)}`}>{s.estado}</span>
@@ -177,13 +173,13 @@ export default function Dashboard({ setVistaActual, solicitudes = [], candidatos
               </div>
             </div>
 
-            {/* boton modulo solicitudes */}
+            {/* Botón módulo solicitudes adaptado a React Router */}
             <div className="card-footer bg-transparent border-0 p-3 pt-0 d-flex justify-content-center">
               <button
                 type="button"
                 className="btn btn-sm text-white fw-semibold d-flex align-items-center justify-content-center gap-2"
                 style={{ backgroundColor: '#0d3c61', borderColor: '#0d3c61' }}
-                onClick={() => setVistaActual('solicitudes')}
+                onClick={() => navigate('/solicitudes')}
               >
                 Ir a Gestión de Solicitudes <i className="bi bi-arrow-right"></i>
               </button>
@@ -209,19 +205,19 @@ export default function Dashboard({ setVistaActual, solicitudes = [], candidatos
                     style={{ backgroundColor: '#0d3c61', width: '38px', height: '38px' }}
                   >
                     <svg
-                        width="22"
-                        height="22"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="#82b1ff"
-                        strokeWidth="2.2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        >
-                        <circle cx="10" cy="7" r="4" />
-                        <path d="M3 21v-2a4 4 0 0 1 4-4h4" />
-                        <circle cx="16.5" cy="15.5" r="3.5" />
-                        <line x1="19" y1="18" x2="22" y2="21" />
+                      width="22"
+                      height="22"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#82b1ff"
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <circle cx="10" cy="7" r="4" />
+                      <path d="M3 21v-2a4 4 0 0 1 4-4h4" />
+                      <circle cx="16.5" cy="15.5" r="3.5" />
+                      <line x1="19" y1="18" x2="22" y2="21" />
                     </svg>
                   </span>
                   <span style={{ color: '#0d3c61' }} className="fw-bold">
@@ -241,34 +237,34 @@ export default function Dashboard({ setVistaActual, solicitudes = [], candidatos
                 <span className="text-muted small">Total activos: <strong>{candidatos.length}</strong></span>
               </div>
 
-              {/* lista de candidatos */}
+              {/* Lista de candidatos */}
               <div className="d-flex flex-column gap-2 mb-3">
-                  {ultimosCandidatos.map((c) => (
-                    <div key={c.id} className='d-flex justify-content-between align-items-center p-2 rounded border bg-light-subtle'>
-                      <div className='d-flex align-items-center gap-2'>
-                        <div className='bg-primary-subtle text-primary fw-bold rounded-circle d-flex align-items-center justify-content-center' style={{ width: '38px', height: '38px' }}>
-                          {c.iniciales}
-                        </div>
-                        <div>
-                          <div className='fw-bold text-dark small'>{c.nombre}</div>
-                          <div className='text-muted small' style={{ fontSize: '0.75rem' }}>
-                            RUT: {c.rut} • {c.cargo}
-                          </div>
+                {ultimosCandidatos.map((c) => (
+                  <div key={c.id} className="d-flex justify-content-between align-items-center p-2 rounded border bg-light-subtle">
+                    <div className="d-flex align-items-center gap-2">
+                      <div className="bg-primary-subtle text-primary fw-bold rounded-circle d-flex align-items-center justify-content-center" style={{ width: '38px', height: '38px' }}>
+                        {c.iniciales}
+                      </div>
+                      <div>
+                        <div className="fw-bold text-dark small">{c.nombre}</div>
+                        <div className="text-muted small" style={{ fontSize: '0.75rem' }}>
+                          RUT: {c.rut} • {c.cargo}
                         </div>
                       </div>
-                      <span className='badge bg-light text-secondary border fw-normal small'>{c.ubicacion}</span>
                     </div>
-                  ))}
+                    <span className="badge bg-light text-secondary border fw-normal small">{c.ubicacion}</span>
+                  </div>
+                ))}
               </div>
             </div>
 
-            {/* botón módulo candidatos */}
+            {/* Botón módulo candidatos adaptado a React Router */}
             <div className="card-footer bg-transparent border-0 p-3 pt-0 d-flex justify-content-center">
               <button
                 type="button"
                 className="btn btn-sm text-white fw-semibold d-flex align-items-center justify-content-center gap-2"
                 style={{ backgroundColor: '#0d3c61', borderColor: '#0d3c61' }}
-                onClick={() => setVistaActual('candidatos')}
+                onClick={() => navigate('/candidatos')}
               >
                 Ir a Gestión de Candidatos <i className="bi bi-arrow-right"></i>
               </button>
