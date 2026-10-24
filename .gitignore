@@ -11,3 +11,7 @@ drive/
 opencode/
 opencode-chat.md
 PENDIENTES.md
+
+# Evitar el package.json duplicado de la raíz
+/package.json
+/package-lock.json
