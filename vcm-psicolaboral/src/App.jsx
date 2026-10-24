@@ -28,7 +28,7 @@ export default function App() {
 
   // Función para agregar un nuevo candidato
   const handleGuardarCandidato = (nuevoCandidato) => {
-    setCandidatos([nuevoCandidato, ...candidatos])
+    setCandidatos((prev) => [nuevoCandidato, ...prev])
     navigate('/candidatos')
   }
 
@@ -77,7 +77,10 @@ export default function App() {
           {/* Ruta para Registrar Candidato */}
           <Route
             path="/registro-candidato"
-            element={<RegistroCandidato onGuardar={handleGuardarCandidato} />}
+            element={<RegistroCandidato 
+              onAgregar={handleGuardarCandidato}
+              onCancelar={() => navigate('/candidatos')} 
+            />}
           />
         </Routes>
       </main>

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { FAMILIAS_CANDIDATOS, UBICACIONES } from '../data/catalogos';
 
-// se recuben 'onCancelar' y 'onGuardar' desde App.jsx
+// se recuben 'onCancelar' y 'onAgregar' desde App.jsx
 export default function RegistroCandidato({onCancelar, onAgregar}) {
   const [formData, setFormData] = useState({
     nombre: '',
@@ -33,11 +33,6 @@ const handleSubmit=(e)=>{
   //Envia el candidato al estado de App.jsx (lo agrega a la tabla)
   if (onAgregar) {
     onAgregar({ id: Date.now(), iniciales, ...formData});
-  }
-
-  // regresa automaticamente al listado
-  if (onCancelar) {
-    onCancelar();
   }
 };
 
