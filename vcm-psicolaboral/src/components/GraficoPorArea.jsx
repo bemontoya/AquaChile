@@ -1,5 +1,3 @@
-import React from 'react';
-
 // Gráfico de dona (CSS/Bootstrap) con las evaluaciones agrupadas por unidad
 const PALETA = ['#0a2a43', '#0d3c61', '#1565a7', '#4aa8e0', '#9fd3f0'];
 
