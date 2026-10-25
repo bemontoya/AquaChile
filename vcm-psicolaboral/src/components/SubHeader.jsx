@@ -4,7 +4,8 @@ export default function SubHeader({
   setFiltroActual, 
   busqueda, 
   setBusqueda, 
-  solicitudes = [] // <- Se agrega valor por defecto para evitar errores si llega undefined
+  solicitudes = [], // <- Se agrega valor por defecto para evitar errores si llega undefined
+  mostrarFiltroEstado = true
 }) {
     const contar = (estado) => solicitudes.filter((s) => s.estado === estado).length; 
     const total = solicitudes.length; 
@@ -36,35 +37,37 @@ export default function SubHeader({
             <div className="d-flex flex-column flex-lg-row justify-content-between align-items-stretch align-items-lg-center gap-3 pt-2">
 
                 {/* Grupo de botones para cambiar el filtro */}
-                <div className="btn-group bg-light p-1 rounded border overflow-auto">
-                    <button
-                        className={`btn btn-sm ${filtroActual === 'Todos' ? 'btn-white shadow-sm fw-bold' : 'btn-light text-muted'}`}
-                        onClick={() => setFiltroActual('Todos')}
-                    >
-                        Todos <span className="badge bg-secondary ms-1">{total}</span>
-                    </button>
+                {mostrarFiltroEstado && (
+                    <div className="btn-group bg-light p-1 rounded border overflow-auto">
+                        <button
+                            className={`btn btn-sm ${filtroActual === 'Todos' ? 'btn-white shadow-sm fw-bold' : 'btn-light text-muted'}`}
+                            onClick={() => setFiltroActual('Todos')}
+                        >
+                            Todos <span className="badge bg-secondary ms-1">{total}</span>
+                        </button>
 
-                    <button
-                        className={`btn btn-sm ${filtroActual === 'Pendiente' ? 'btn-white shadow-sm fw-bold' : 'btn-light text-muted'}`}
-                        onClick={() => setFiltroActual('Pendiente')}
-                    >
-                        Pendientes <span className="badge bg-warning text-dark ms-1">{pendientes}</span>
-                    </button>
-                    
-                    <button
-                        className={`btn btn-sm ${filtroActual === 'En proceso' ? 'btn-white shadow-sm fw-bold' : 'btn-light text-muted'}`}
-                        onClick={() => setFiltroActual('En proceso')}
-                    >
-                        En proceso <span className="badge bg-info text-dark ms-1">{enProceso}</span>
-                    </button>
+                        <button
+                            className={`btn btn-sm ${filtroActual === 'Pendiente' ? 'btn-white shadow-sm fw-bold' : 'btn-light text-muted'}`}
+                            onClick={() => setFiltroActual('Pendiente')}
+                        >
+                            Pendientes <span className="badge bg-warning text-dark ms-1">{pendientes}</span>
+                        </button>
+                        
+                        <button
+                            className={`btn btn-sm ${filtroActual === 'En proceso' ? 'btn-white shadow-sm fw-bold' : 'btn-light text-muted'}`}
+                            onClick={() => setFiltroActual('En proceso')}
+                        >
+                            En proceso <span className="badge bg-info text-dark ms-1">{enProceso}</span>
+                        </button>
 
-                    <button
-                        className={`btn btn-sm ${filtroActual === 'Finalizada' ? 'btn-white shadow-sm fw-bold' : 'btn-light text-muted'}`}
-                        onClick={() => setFiltroActual('Finalizada')}
-                    >
-                        Finalizadas <span className="badge bg-success ms-1">{finalizadas}</span>
-                    </button>
-                </div>
+                        <button
+                            className={`btn btn-sm ${filtroActual === 'Finalizada' ? 'btn-white shadow-sm fw-bold' : 'btn-light text-muted'}`}
+                            onClick={() => setFiltroActual('Finalizada')}
+                        >
+                            Finalizadas <span className="badge bg-success ms-1">{finalizadas}</span>
+                        </button>
+                    </div>
+                )}
 
                 {/* Campo de entrada para filtrar */}
                 <div className="d-flex flex-column flex-sm-row gap-2">

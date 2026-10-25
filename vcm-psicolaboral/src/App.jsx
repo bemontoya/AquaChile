@@ -6,6 +6,7 @@ import KanbanSolicitudes from './components/KanbanSolicitudes' // Importamos tu 
 import SubHeader from './components/SubHeader'
 import CandidatosTabla from './components/CandidatosTabla'
 import RegistroCandidato from './components/RegistroCandidato'
+import SolicitudesTabla from './components/SolicitudesTabla'
 import { solicitudesIniciales } from './data/solicitudesData'
 import { candidatosIniciales } from './data/candidatosData'
 import { crearSolicitudDesdeCandidato } from './utils/solicitudes'
@@ -15,17 +16,23 @@ export default function App() {
   const [candidatos, setCandidatos] = useState(candidatosIniciales)
   const [filtroActual, setFiltroActual] = useState('Todos')
   const [busqueda, setBusqueda] = useState('')
+  const [modoSolicitudes, setModoSolicitudes] = useState('kanban')
   const navigate = useNavigate()
 
   // Filtrado de solicitudes
-  const solicitudesFiltradas = solicitudes.filter((s) => {
-    const coincideEstado = filtroActual === 'Todos' || s.estado === filtroActual
-    const coincideBusqueda =
-      s.candidato.toLowerCase().includes(busqueda.toLowerCase()) ||
-      s.rut.toLowerCase().includes(busqueda.toLowerCase()) ||
-      s.cargo.toLowerCase().includes(busqueda.toLowerCase())
-    return coincideEstado && coincideBusqueda
+  const solicitudesBuscadas = solicitudes.filter((s) => {
+    const texto = busqueda.toLowerCase()
+    return(
+      s.candidato.toLowerCase().includes(texto) ||
+      s.rut.toLowerCase().includes(texto) ||
+      s.cargo.toLowerCase().includes(texto)
+  )
   })
+
+  // Búsqueda + filtro por estado (para vista Tabla)
+  const solicitudesFiltradas = solicitudesBuscadas.filter((s) =>
+    filtroActual === 'Todos' || s.estado === filtroActual
+  )
 
   // Función para agregar un nuevo candidato
   const handleGuardarCandidato = (nuevoCandidato) => {
@@ -67,11 +74,35 @@ export default function App() {
                   busqueda={busqueda}
                   setBusqueda={setBusqueda}
                   solicitudes={solicitudes}
+                  mostrarFiltroEstado={modoSolicitudes === 'tabla'}
                 />
+                <div className='d-flex justify-content-end align-items-center gap-2 mb-3'>
+                  <div className='btn-group btn-group-sm shadow-sm' role='group'>
+                    <button
+                      type='button'
+                      className={`btn ${modoSolicitudes === 'tabla' ? 'btn-primary text-white' : 'btn-light border'}`}
+                      onClick={() => setModoSolicitudes('tabla')}
+                      >
+                        <i className='bi bi-table me-1'></i> Tabla
+                    </button>
+                    <button
+                      type='button'
+                      className={`btn ${modoSolicitudes === 'kanban' ? 'btn-primary text-white' : 'btn-light border'}`}
+                      onClick={() => setModoSolicitudes('kanban')}
+                      >
+                        <i className='bi bi-kanban me-1'></i> Kanban
+                    </button>
+                  </div>
+                </div>
+
+                {modoSolicitudes === 'tabla' ? (
+                  <SolicitudesTabla solicitudes={solicitudesFiltradas} />
+                ):(
                 <KanbanSolicitudes 
-                  solicitudes={solicitudesFiltradas} 
+                  solicitudes={solicitudesBuscadas} 
                   setSolicitudes={setSolicitudes} 
                 />
+                )}
               </>
             }
           />
