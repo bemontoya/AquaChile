@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FAMILIAS_CANDIDATOS, UBICACIONES } from '../data/catalogos';
+import { FAMILIAS_CANDIDATOS, UBICACIONES, UNIDADES } from '../data/catalogos';
 
 // se recuben 'onCancelar' y 'onAgregar' desde App.jsx
 export default function RegistroCandidato({onCancelar, onAgregar}) {
@@ -9,6 +9,7 @@ export default function RegistroCandidato({onCancelar, onAgregar}) {
     email: '',
     telefono: '',
     cargo: '',
+    unidad: '',
     ubicacion: '',
     familiaCargo: ''
 });
@@ -183,7 +184,9 @@ return (
                 ))}
               </select>
             </div>
+          </div>
 
+          <div className='row g-3 mb-4'>
             {/* select ubicación */}
             <div className='col-md-6'>
               <label className='form-label small fw-semibold'>Ubicación
@@ -199,6 +202,25 @@ return (
                 <option value="">Seleccione una ubicación</option>
                 {UBICACIONES.map((ubi) => (
                   <option key={ubi} value={ubi}>{ubi}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* select unidad */}
+            <div className='col-md-6'>
+              <label className='form-label small fw-semibold'>Unidad
+                <span className='text-danger'>*</span>
+              </label>
+              <select
+                name='unidad'
+                className='form-select form-select-md'
+                value={formData.unidad}
+                onChange={handleChange}
+                required
+              >
+                <option value="">Seleccione una unidad</option>
+                {UNIDADES.map((unidad) => (
+                  <option key={unidad} value={unidad}>{unidad}</option>
                 ))}
               </select>
             </div>

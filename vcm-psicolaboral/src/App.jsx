@@ -8,6 +8,7 @@ import CandidatosTabla from './components/CandidatosTabla'
 import RegistroCandidato from './components/RegistroCandidato'
 import { solicitudesIniciales } from './data/solicitudesData'
 import { candidatosIniciales } from './data/candidatosData'
+import { crearSolicitudDesdeCandidato } from './utils/solicitudes'
 
 export default function App() {
   const [solicitudes, setSolicitudes] = useState(solicitudesIniciales)
@@ -29,6 +30,13 @@ export default function App() {
   // Función para agregar un nuevo candidato
   const handleGuardarCandidato = (nuevoCandidato) => {
     setCandidatos((prev) => [nuevoCandidato, ...prev])
+
+    // Todo postulante nuevo entra a la cola como solicitud Pendiente
+    setSolicitudes((prev) => [
+      crearSolicitudDesdeCandidato(nuevoCandidato, prev), 
+      ...prev
+    ])
+
     navigate('/candidatos')
   }
 
