@@ -49,12 +49,12 @@ src/
 
 2. **Instalar dependencias:**
    ```bash
-   npm install
+   npx install
    ```
 
 3. **Iniciar el servidor de desarrollo:**
    ```bash
-   npm run dev
+   npx run dev
    ```
    Abre la dirección que indica la consola (generalmente `http://localhost:5173`) en tu navegador.
 
