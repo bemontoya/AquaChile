@@ -88,3 +88,14 @@ Las pruebas automatizadas del proyecto verifican el correcto renderizado de los 
 * `src/components/CandidatosTabla.test.jsx`: Valida la renderización dinámica de los datos del candidato.
 * `src/components/SubHeader.test.jsx`: Verifica la correcta visualización de contadores y resumen de navegación.
 * `src/components/GraficoPorArea.test.jsx`: Comprueba la distribución y estructura de las barras indicadoras por área.
+
+## Ejecución de de Resend
+
+1. Entrar a la carpeta del proyecto
+   cd vcm-psicolaboral
+
+2. Instalar el servidor Express, CORS y el SDK de Resend
+   npm install express cors resend
+
+3. Instalar dotenv para la lectura del archivo .env
+   npm install dotenv
