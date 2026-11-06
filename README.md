@@ -91,11 +91,17 @@ Las pruebas automatizadas del proyecto verifican el correcto renderizado de los 
 
 ## Ejecución de de Resend
 
-1. Entrar a la carpeta del proyecto
+1. **Entrar a la carpeta del proyecto:**
+   ```bash
    cd vcm-psicolaboral
+   ```
 
-2. Instalar el servidor Express, CORS y el SDK de Resend
+2. **Instalar el servidor Express, CORS y el SDK de Resend:**
+   ```bash
    npm install express cors resend
+   ```
 
-3. Instalar dotenv para la lectura del archivo .env
+3. **Instalar dotenv para la lectura del archivo .env:**
+   ```bash
    npm install dotenv
+   ```
