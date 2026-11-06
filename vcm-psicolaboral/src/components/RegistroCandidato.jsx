@@ -24,7 +24,7 @@ const handleChange = (e) => {
 };
 
 // accion al enviar el formulario
-const handleSubmit=(e)=>{
+const handleSubmit= async (e)=>{
   e.preventDefault(); // Evita el refresco de la página
 
   // Iniciales: primera letra del nombre + primera del apellido paterno
@@ -35,6 +35,30 @@ const handleSubmit=(e)=>{
   if (onAgregar) {
     onAgregar({ id: Date.now(), iniciales, ...formData});
   }
+
+  try {
+      const respuesta = await fetch('http://localhost:3001/api/enviar-confirmacion', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          nombre: formData.nombre,
+          email: formData.email,
+          cargo: formData.cargo
+        })
+      });
+
+      const resultado = await respuesta.json();
+      console.log('Resultado del envío de correo:', resultado);
+    } catch (error) {
+      console.error('Error al conectar con el servidor del correo:', error);
+    }
+
+    // Regresa a la vista anterior (cierra el formulario o vuelve a candidatos)
+    if (onCancelar) {
+      onCancelar();
+    }
 };
 
 return (

@@ -16,9 +16,13 @@
     "@dnd-kit/utilities": "^3.2.2",
     "bootstrap": "^5.3.0",
     "bootstrap-icons": "^1.11.0",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.9",
+    "express": "^5.3.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^6.20.0"
+    "react-router-dom": "^6.20.0",
+    "resend": "^6.37.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
