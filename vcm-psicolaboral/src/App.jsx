@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Routes, Route, useNavigate } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import Dashboard from './components/Dashboard'
-import KanbanSolicitudes from './components/KanbanSolicitudes' // Importamos tu Kanban
+import KanbanSolicitudes from './components/KanbanSolicitudes' 
 import SubHeader from './components/SubHeader'
 import CandidatosTabla from './components/CandidatosTabla'
 import RegistroCandidato from './components/RegistroCandidato'
@@ -10,6 +10,7 @@ import SolicitudesTabla from './components/SolicitudesTabla'
 import { solicitudesIniciales } from './data/solicitudesData'
 import { candidatosIniciales } from './data/candidatosData'
 import { crearSolicitudDesdeCandidato } from './utils/solicitudes'
+import DetalleCandidato from './components/DetalleCandidato'
 
 export default function App() {
   const [solicitudes, setSolicitudes] = useState(solicitudesIniciales)
@@ -112,6 +113,8 @@ export default function App() {
             path="/candidatos"
             element={<CandidatosTabla candidatos={candidatos} />}
           />
+
+          <Route path="/candidatos/:id" element={<DetalleCandidato candidatos={candidatos} />} />
 
           {/* Ruta para Registrar Candidato */}
           <Route

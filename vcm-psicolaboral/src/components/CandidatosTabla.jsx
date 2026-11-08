@@ -166,8 +166,12 @@ export default function CandidatosTabla({ candidatos }) {
 
                   <td className="text-end pe-4">
                     <div className="d-flex gap-1 justify-content-end">
-                      <button type="button" className="btn btn-sm btn-light border text-secondary me-1">
-                        <i className="bi bi-pencil me-1"></i> Editar
+                      <button type="button" className="btn btn-sm btn-light border text-secondary me-1"
+                      onClick={() => navigate(`/candidatos/${item.id}`)}
+                      >
+
+                        <i className="bi bi-eye me-1"></i> Ver detalles
+                        
                       </button>
                     </div>
                   </td>
