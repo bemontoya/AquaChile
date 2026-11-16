@@ -15,3 +15,6 @@ PENDIENTES.md
 # Evitar el package.json duplicado de la raíz
 /package.json
 /package-lock.json
+.env
+uploads_privados/
+node_modules/
