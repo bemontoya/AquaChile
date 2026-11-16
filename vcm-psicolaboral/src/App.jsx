@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Routes, Route, useNavigate } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import Dashboard from './components/Dashboard'
@@ -11,6 +11,7 @@ import { solicitudesIniciales } from './data/solicitudesData'
 import { candidatosIniciales } from './data/candidatosData'
 import { crearSolicitudDesdeCandidato } from './utils/solicitudes'
 import DetalleCandidato from './components/DetalleCandidato'
+import { cargarDatosDesdeBD, sincronizarEstadoEvaluacion } from './services/api'
 
 export default function App() {
   const [solicitudes, setSolicitudes] = useState(solicitudesIniciales)
@@ -20,14 +21,42 @@ export default function App() {
   const [modoSolicitudes, setModoSolicitudes] = useState('kanban')
   const navigate = useNavigate()
 
+  // Cargar registros reales desde PostgreSQL al iniciar
+  useEffect(() => {
+    cargarDatosDesdeBD()
+      .then((datos) => {
+        if (datos && datos.solicitudesBD.length > 0) {
+          setSolicitudes([...datos.solicitudesBD, ...solicitudesIniciales])
+          setCandidatos([...datos.candidatosBD, ...candidatosIniciales])
+        }
+      })
+      .catch(() => {
+        // Si el backend no está activo (ej. en tests), mantiene datos locales
+      })
+  }, [])
+
+  // Wrapper de setSolicitudes para persistir en BD cuando cambia el estado en Kanban
+  const handleActualizarSolicitudes = (updater) => {
+    setSolicitudes((prev) => {
+      const siguiente = typeof updater === 'function' ? updater(prev) : updater
+      siguiente.forEach((itemNuevo) => {
+        const itemAnterior = prev.find((p) => p.id === itemNuevo.id)
+        if (itemAnterior && itemAnterior.estado !== itemNuevo.estado && itemNuevo.evaluacionId) {
+          sincronizarEstadoEvaluacion(itemNuevo.evaluacionId, itemNuevo.estado).catch(() => {})
+        }
+      })
+      return siguiente
+    })
+  }
+
   // Filtrado de solicitudes
   const solicitudesBuscadas = solicitudes.filter((s) => {
     const texto = busqueda.toLowerCase()
-    return(
+    return (
       s.candidato.toLowerCase().includes(texto) ||
       s.rut.toLowerCase().includes(texto) ||
       s.cargo.toLowerCase().includes(texto)
-  )
+    )
   })
 
   // Búsqueda + filtro por estado (para vista Tabla)
@@ -83,26 +112,26 @@ export default function App() {
                       type='button'
                       className={`btn ${modoSolicitudes === 'tabla' ? 'btn-primary text-white' : 'btn-light border'}`}
                       onClick={() => setModoSolicitudes('tabla')}
-                      >
-                        <i className='bi bi-table me-1'></i> Tabla
+                    >
+                      <i className='bi bi-table me-1'></i> Tabla
                     </button>
                     <button
                       type='button'
                       className={`btn ${modoSolicitudes === 'kanban' ? 'btn-primary text-white' : 'btn-light border'}`}
                       onClick={() => setModoSolicitudes('kanban')}
-                      >
-                        <i className='bi bi-kanban me-1'></i> Kanban
+                    >
+                      <i className='bi bi-kanban me-1'></i> Kanban
                     </button>
                   </div>
                 </div>
 
                 {modoSolicitudes === 'tabla' ? (
                   <SolicitudesTabla solicitudes={solicitudesFiltradas} />
-                ):(
-                <KanbanSolicitudes 
-                  solicitudes={solicitudesBuscadas} 
-                  setSolicitudes={setSolicitudes} 
-                />
+                ) : (
+                  <KanbanSolicitudes 
+                    solicitudes={solicitudesBuscadas} 
+                    setSolicitudes={handleActualizarSolicitudes} 
+                  />
                 )}
               </>
             }

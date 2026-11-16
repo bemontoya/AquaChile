@@ -1,0 +1,131 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 1. Usuarios internos del sistema (Analista de Reclutamiento y Profesional Evaluador)
+model Usuario {
+  id           Int                   @id @default(autoincrement())
+  nombre       String
+  email        String                @unique
+  password     String                // Contraseña hasheada con bcrypt
+  rol          RolUsuario            @default(ANALISTA)
+  activo       Boolean               @default(true)
+  createdAt    DateTime              @default(now())
+  
+  ofertas      Oferta[]              // Ofertas creadas por el analista
+  evaluaciones SolicitudEvaluacion[] // Evaluaciones asignadas al responsable
+}
+
+enum RolUsuario {
+  ANALISTA
+  EVALUADOR
+}
+
+// 2. Ofertas laborales (Panel admin + Portal público)
+model Oferta {
+  id               Int            @id @default(autoincrement())
+  cargo            String
+  familiaCargo     String         // Categoría/Familia
+  ubicacion        String
+  unidad           String?
+  modalidad        Modalidad      @default(PRESENCIAL)
+  fechaPublicacion DateTime       @default(now())
+  cupos            Int            @default(1)
+  descripcion      String         @db.Text
+  funciones        String         @db.Text
+  requisitos       String         @db.Text
+  beneficios       String?        @db.Text
+  rangoSalarial    String?
+  publicada        Boolean        @default(false) // Controla visibilidad en portal público
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  creadorId        Int
+  creador          Usuario        @relation(fields: [creadorId], references: [id])
+  postulaciones    Postulacion[]
+}
+
+enum Modalidad {
+  PRESENCIAL
+  HIBRIDA
+  REMOTA
+}
+
+// 3. Postulantes / Candidatos
+model Postulante {
+  id            Int           @id @default(autoincrement())
+  nombre        String
+  rut           String        @unique
+  email         String
+  telefono      String
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  postulaciones Postulacion[]
+}
+
+// 4. Postulaciones (Vincula Postulante + Oferta + Carpeta/CV + Resumen IA)
+model Postulacion {
+  id             Int                  @id @default(autoincrement())
+  postulanteId   Int
+  postulante     Postulante           @relation(fields: [postulanteId], references: [id], onDelete: Cascade)
+  ofertaId       Int
+  oferta         Oferta               @relation(fields: [ofertaId], references: [id], onDelete: Cascade)
+  
+  // Almacenamiento persistente del CV (Punto 7 de la pauta)
+  carpetaNombre  String               // Ej: "juan_perez_17317890"
+  cvRutaArchivo  String               // Ruta en Storage o servidor privado
+  cvNombreOriginal String
+  
+  // Apoyo de Inteligencia Artificial (Punto 9 de la pauta)
+  resumenIA      String?              @db.Text
+  puntajeIA      Int?                 // Puntuación orientativa 0-100
+  preguntasIA    String?              @db.Text
+  
+  estado         EstadoPostulacion    @default(RECIBIDA)
+  fechaPostulacion DateTime           @default(now())
+
+  evaluacion     SolicitudEvaluacion?
+
+  @@unique([postulanteId, ofertaId]) // Evita duplicar postulación a la misma oferta
+}
+
+enum EstadoPostulacion {
+  RECIBIDA
+  EN_EVALUACION
+  SELECCIONADO
+  DESCARTADO
+}
+
+// 5. Solicitudes de Evaluación Psicolaboral (Flujo Kanban + Google Calendar)
+model SolicitudEvaluacion {
+  id              Int              @id @default(autoincrement())
+  postulacionId   Int              @unique
+  postulacion     Postulacion      @relation(fields: [postulacionId], references: [id], onDelete: Cascade)
+  
+  responsableId   Int
+  responsable     Usuario          @relation(fields: [responsableId], references: [id])
+  
+  // Estados exactos exigidos en el Punto 8 de la pauta
+  estado          EstadoEvaluacion @default(PENDIENTE)
+  fechaSolicitud  DateTime         @default(now())
+  fechaEvaluacion DateTime?
+  observaciones   String?          @db.Text
+  
+  // Sincronización con Google Calendar
+  googleEventId   String?
+  meetLink        String?
+  
+  updatedAt       DateTime         @updatedAt
+}
+
+enum EstadoEvaluacion {
+  PENDIENTE
+  EN_PROCESO
+  FINALIZADA
+}
