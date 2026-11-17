@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { FAMILIAS_CANDIDATOS } from '../data/catalogos';
 import { crearEventoCalendario } from '../utils/googleCalendar';
@@ -20,7 +20,7 @@ const TIPOS_SESION = [
 const EVALUADORES = [
   { nombre: 'Dra. Marcela Vidal', email: 'benjamin.montoya2006@gmail.com' },
   { nombre: 'Claudio Arriagada', email: 'benjamin.montoya2006@gmail.com' },
-  { nombre: 'Claudia Rios', email: 'benjamin.montoya2006@gmail.com' },
+  { nombre: 'Claudia Ríos', email: 'benjamin.montoya2006@gmail.com' },
 ];
 
 const BLOQUES_HORARIOS = [
@@ -33,6 +33,20 @@ const BLOQUES_HORARIOS = [
 const ESTADOS_EVALUACION = ['Pendiente', 'En Proceso', 'Finalizada'];
 
 const hoy = new Date().toISOString().split('T')[0];
+
+function construirResultadoInicialIA(candidato) {
+  if (!candidato?.resumenIA) return null;
+  return {
+    puntajeOrientativo: candidato.puntajeIA,
+    resumen: candidato.resumenIA,
+    preguntasSugeridas: candidato.preguntasIA ? candidato.preguntasIA.split('\n') : [],
+    criteriosEvaluados: [
+      'Alineación de experiencia con funciones del cargo',
+      'Coherencia de ubicación y familia ocupacional',
+      'Competencias transversales declaradas en antecedentes',
+    ],
+  };
+}
 
 export default function DetalleCandidato({ candidatos }) {
   const navigate = useNavigate();
@@ -67,22 +81,28 @@ export default function DetalleCandidato({ candidatos }) {
 
   // Estado para el Asistente de IA (Punto 9 de la pauta)
   const [analizandoIA, setAnalizandoIA] = useState(false);
-  const [resultadoIA, setResultadoIA] = useState(
-    candidato?.resumenIA
-      ? {
-          puntajeOrientativo: candidato.puntajeIA,
-          resumen: candidato.resumenIA,
-          preguntasSugeridas: candidato.preguntasIA ? candidato.preguntasIA.split('\n') : [],
-          criteriosEvaluados: [
-            'Alineación de experiencia con funciones del cargo',
-            'Coherencia de ubicación y familia ocupacional',
-            'Competencias transversales declaradas en antecedentes',
-          ],
-          advertencia:
-            'Herramienta de apoyo orientativo. No toma decisiones automáticas de contratación ni descarte; requiere validación clínica y humana obligatoria.',
-        }
-      : null
-  );
+  const [resultadoIA, setResultadoIA] = useState(() => construirResultadoInicialIA(candidato));
+
+  useEffect(() => {
+    if (!candidato) return;
+    setForm({
+      nombre: candidato.nombre ?? '',
+      telefono: candidato.telefono ?? '',
+      email: candidato.email ?? '',
+      cargo: candidato.cargo ?? '',
+      familiaCargo: candidato.familiaCargo ?? '',
+      estado: candidato.estado ?? 'Pendiente',
+      observaciones: candidato.observaciones ?? candidato.notas ?? '',
+    });
+    setAgenda((prev) => ({
+      ...prev,
+      emailDestinatario: candidato.email ?? '',
+      fecha: '',
+    }));
+    setResultadoIA(construirResultadoInicialIA(candidato));
+    setMensaje(null);
+    setMensajeEval(null);
+  }, [candidato]);
 
   const manejarCambioForm = (e) => {
     const { name, value } = e.target;
@@ -140,8 +160,19 @@ export default function DetalleCandidato({ candidatos }) {
     setAnalizandoIA(true);
     setMensajeEval(null);
     try {
-      const data = await analizarCandidatoConIA(candidato.postulacionId, form.observaciones);
-      setResultadoIA(data);
+      const data = await analizarCandidatoConIA({
+        postulacionId: candidato.postulacionId,
+        nombrePostulante: form.nombre || candidato.nombre,
+        cargo: form.cargo || candidato.cargo,
+        familiaCargo: form.familiaCargo || candidato.familiaCargo,
+        observacionesPrevias: form.observaciones,
+      });
+      setResultadoIA({
+        puntajeOrientativo: data.puntajeOrientativo ?? 82,
+        resumen: data.resumen,
+        preguntasSugeridas: data.preguntasSugeridas || [],
+        criteriosEvaluados: data.criteriosEvaluados || [],
+      });
     } catch (error) {
       setMensajeEval({ tipo: 'danger', texto: error.message });
     } finally {

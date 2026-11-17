@@ -9,7 +9,10 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest",
-    "postinstall": "prisma skills sync || exit 0"
+    "postinstall": "prisma skills sync || exit 0",
+    "test:backend": "cross-env NODE_ENV=test vitest run tests/backend.test.js --environment node --coverage --coverage.include=server.js --coverage.include=middlewares/**",
+    "test:frontend": "vitest run tests/frontend.test.jsx --environment jsdom --coverage --coverage.include=src/**",
+    "test:all": "npm run test:backend && npm run test:frontend"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -36,15 +39,19 @@
     "@eslint/js": "^10.0.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^14.3.1",
+    "@testing-library/user-event": "^14.6.12",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "@vitejs/plugin-react": "^4.0.0",
+    "@vitest/coverage-v8": "^2.1.9",
+    "cross-env": "^10.1.0",
     "eslint": "^10.10.0",
     "eslint-plugin-react-hooks": "7.1.1",
     "eslint-plugin-react-refresh": "0.5.7",
     "globals": "^17.12.0",
     "jsdom": "^22.1.0",
+    "supertest": "^7.3.2",
     "vite": "^4.0.0",
-    "vitest": "^0.34.6"
+    "vitest": "^2.1.9"
   }
 }

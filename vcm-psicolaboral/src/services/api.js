@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:3001/api';
+﻿const API_URL = 'http://localhost:3001/api';
 
 const MAPA_ESTADO_DESDE_BD = {
   PENDIENTE: 'Pendiente',
@@ -33,7 +33,7 @@ function obtenerIniciales(nombre = '') {
   );
 }
 
-// --- SESIÓN Y JWT ---
+// --- SESIÃ“N Y JWT ---
 export function getToken() {
   return localStorage.getItem('aquachile_token');
 }
@@ -55,7 +55,7 @@ export async function loginAPI(email, password) {
     body: JSON.stringify({ email, password }),
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Credenciales inválidas');
+  if (!res.ok) throw new Error(data.error || 'Credenciales invÃ¡lidas');
 
   localStorage.setItem('aquachile_token', data.token);
   localStorage.setItem('aquachile_usuario', JSON.stringify(data.usuario));
@@ -67,7 +67,7 @@ function authHeaders() {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-// --- PORTAL PÚBLICO DE OFERTAS (SIN LOGIN) ---
+// --- PORTAL PÃšBLICO DE OFERTAS (SIN LOGIN) ---
 export async function obtenerOfertasPublicas({ familiaCargo = '', busqueda = '' } = {}) {
   const params = new URLSearchParams();
   if (familiaCargo) params.append('familiaCargo', familiaCargo);
@@ -92,11 +92,11 @@ export async function enviarPostulacionPublica({ ofertaId, nombre, rut, email, t
     body: formData,
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'No se pudo registrar la postulación');
+  if (!res.ok) throw new Error(data.error || 'No se pudo registrar la postulaciÃ³n');
   return data;
 }
 
-// --- ADMINISTRACIÓN DE OFERTAS (PROTEGIDO CON JWT) ---
+// --- ADMINISTRACIÃ“N DE OFERTAS (PROTEGIDO CON JWT) ---
 export async function obtenerOfertasAdmin() {
   const res = await fetch(`${API_URL}/ofertas`, { headers: authHeaders() });
   if (!res.ok) throw new Error('No autorizado o error al cargar ofertas');
@@ -132,7 +132,7 @@ export async function togglePublicarOfertaAPI(id, publicada) {
     body: JSON.stringify({ publicada }),
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Error al cambiar estado de publicación');
+  if (!res.ok) throw new Error(data.error || 'Error al cambiar estado de publicaciÃ³n');
   return data;
 }
 
@@ -214,7 +214,7 @@ export async function sincronizarEstadoEvaluacion(evaluacionId, nuevoEstadoUI) {
   });
 }
 
-// --- BLOQUE 2: DESCARGA SEGURA DE CV, EVALUACIÓN E INTELIGENCIA ARTIFICIAL ---
+// --- BLOQUE 2: DESCARGA SEGURA DE CV, EVALUACIÃ“N E INTELIGENCIA ARTIFICIAL ---
 export async function descargarCVPrivado(postulacionId, nombreArchivo = 'CV_Postulante.pdf') {
   const res = await fetch(`${API_URL}/postulaciones/${postulacionId}/cv`, {
     headers: authHeaders(),
@@ -246,15 +246,27 @@ export async function actualizarEvaluacionAPI(evaluacionId, { estado, observacio
     }),
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Error al actualizar la evaluación');
+  if (!res.ok) throw new Error(data.error || 'Error al actualizar la evaluaciÃ³n');
   return data;
 }
 
-export async function analizarCandidatoConIA(postulacionId, textoCV = '') {
+export async function analizarCandidatoConIA({
+  postulacionId,
+  nombrePostulante,
+  cargo,
+  familiaCargo,
+  observacionesPrevias = '',
+}) {
   const res = await fetch(`${API_URL}/ia/analizar-candidato`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...authHeaders() },
-    body: JSON.stringify({ postulacionId, textoCV }),
+    body: JSON.stringify({
+      postulacionId,
+      nombrePostulante,
+      cargo,
+      familiaCargo,
+      observacionesPrevias,
+    }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Error al ejecutar análisis de IA');
