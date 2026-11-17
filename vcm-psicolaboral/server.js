@@ -267,59 +267,6 @@ app.patch('/api/ofertas/:id/publicar', verificarToken, permitirRoles('ANALISTA')
  *       201:
  *         description: PostulaciÃ³n registrada y CV almacenado en carpeta privada
  */
-app.post('/api/postulaciones', uploadCV.single('cv'), async (req, res) => {
-  const { ofertaId, nombre, rut, email, telefono } = req.body;
-
-  if (!req.file) {
-    return res.status(400).json({ error: 'Debe adjuntar un archivo CV vÃ¡lido (PDF o DOCX, mÃ¡x. 5MB).' });
-  }
-
-  try {
-    // 1. Crear o actualizar datos del postulante por RUT
-    const postulante = await prisma.postulante.upsert({
-      where: { rut },
-      update: { nombre, email, telefono },
-      create: { nombre, rut, email, telefono },
-    });
-
-    // 2. Registrar postulaciÃ³n vinculada a la carpeta privada del CV
-    const postulacion = await prisma.postulacion.create({
-      data: {
-        postulanteId: postulante.id,
-        ofertaId: Number(ofertaId),
-        carpetaNombre: req.carpetaPostulante,
-        cvRutaArchivo: req.file.path,
-        cvNombreOriginal: req.file.originalname,
-      },
-      include: { oferta: true },
-    });
-
-    // 3. Crear automÃ¡ticamente la solicitud de evaluaciÃ³n en estado PENDIENTE
-    const evaluadorDefault = await prisma.usuario.findFirst({
-      where: { rol: 'EVALUADOR' },
-    });
-
-    if (evaluadorDefault) {
-      await prisma.solicitudEvaluacion.create({
-        data: {
-          postulacionId: postulacion.id,
-          responsableId: evaluadorDefault.id,
-          estado: 'PENDIENTE',
-        },
-      });
-    }
-
-    res.status(201).json({
-      mensaje: 'PostulaciÃ³n registrada correctamente',
-      postulacion,
-    });
-  } catch (error) {
-    if (error.code === 'P2002') {
-      return res.status(409).json({ error: 'Ya registraste una postulaciÃ³n para esta oferta.' });
-    }
-    res.status(400).json({ error: error.message });
-  }
-});
 
 /**
  * @swagger
@@ -369,19 +316,83 @@ app.get('/api/postulaciones', verificarToken, async (req, res) => {
  *       200:
  *         description: Descarga del archivo CV
  */
-app.get('/api/postulaciones/:id/cv', verificarToken, async (req, res) => {
-  try {
-    const postulacion = await prisma.postulacion.findUnique({
-      where: { id: Number(req.params.id) },
-    });
+app.post('/api/postulaciones', uploadCV.single('cv'), async (req, res) => {
+  const { ofertaId, nombre, rut, email, telefono, cargo, familiaCargo, ubicacion, unidad } = req.body;
 
-    if (!postulacion || !fs.existsSync(postulacion.cvRutaArchivo)) {
-      return res.status(404).json({ error: 'Archivo CV no encontrado en el servidor.' });
+  if (!req.file) {
+    return res.status(400).json({ error: 'Debe adjuntar un archivo CV válido (PDF o DOCX, máx. 5MB).' });
+  }
+
+  try {
+    // 1. Resolver oferta: usar ofertaId si viene, o buscar/crear por nombre de cargo
+    let ofertaFinalId = ofertaId ? Number(ofertaId) : null;
+
+    if (!ofertaFinalId && cargo) {
+      let ofertaExistente = await prisma.oferta.findFirst({
+        where: { cargo: { equals: cargo.trim(), mode: 'insensitive' } },
+      });
+
+      if (!ofertaExistente) {
+        const creador = await prisma.usuario.findFirst({ where: { rol: 'ANALISTA' } });
+        ofertaExistente = await prisma.oferta.create({
+          data: {
+            cargo: cargo.trim(),
+            familiaCargo: familiaCargo || 'Operaciones y Centros de Cultivo',
+            ubicacion: ubicacion || 'Puerto Montt',
+            unidad: unidad || 'General',
+            descripcion: `Proceso de admisión directa para ${cargo.trim()}`,
+            funciones: `Funciones asociadas al cargo de ${cargo.trim()}`,
+            requisitos: `Requisitos estándar del perfil para ${cargo.trim()}`,
+            creadorId: creador.id,
+          },
+        });
+      }
+      ofertaFinalId = ofertaExistente.id;
     }
 
-    res.download(postulacion.cvRutaArchivo, postulacion.cvNombreOriginal);
+    // 2. Crear o actualizar datos del postulante por RUT
+    const postulante = await prisma.postulante.upsert({
+      where: { rut },
+      update: { nombre, email, telefono },
+      create: { nombre, rut, email, telefono },
+    });
+
+    // 3. Registrar postulación vinculada a la carpeta privada del CV
+    const postulacion = await prisma.postulacion.create({
+      data: {
+        postulanteId: postulante.id,
+        ofertaId: ofertaFinalId,
+        carpetaNombre: req.carpetaPostulante,
+        cvRutaArchivo: req.file.path,
+        cvNombreOriginal: req.file.originalname,
+      },
+      include: { oferta: true },
+    });
+
+    // 4. Crear automáticamente la solicitud de evaluación en estado PENDIENTE
+    const evaluadorDefault = await prisma.usuario.findFirst({
+      where: { rol: 'EVALUADOR' },
+    });
+
+    if (evaluadorDefault) {
+      await prisma.solicitudEvaluacion.create({
+        data: {
+          postulacionId: postulacion.id,
+          responsableId: evaluadorDefault.id,
+          estado: 'PENDIENTE',
+        },
+      });
+    }
+
+    res.status(201).json({
+      mensaje: 'Postulación registrada correctamente',
+      postulacion,
+    });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    if (error.code === 'P2002') {
+      return res.status(409).json({ error: 'Ya registraste una postulación para esta oferta.' });
+    }
+    res.status(400).json({ error: error.message });
   }
 });
 
@@ -552,3 +563,5 @@ app.listen(PORT, () => {
   console.log(`Servidor corriendo en el puerto ${PORT}`);
   console.log(`DocumentaciÃ³n Swagger disponible en http://localhost:${PORT}/api-docs`);
 });
+
+

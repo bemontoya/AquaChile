@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
-import { Routes, Route, useNavigate } from 'react-router-dom'
+import { Routes, Route, useNavigate, Navigate } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import Dashboard from './components/Dashboard'
-import KanbanSolicitudes from './components/KanbanSolicitudes' 
+import KanbanSolicitudes from './components/KanbanSolicitudes'
 import SubHeader from './components/SubHeader'
 import CandidatosTabla from './components/CandidatosTabla'
 import RegistroCandidato from './components/RegistroCandidato'
@@ -11,9 +11,23 @@ import { solicitudesIniciales } from './data/solicitudesData'
 import { candidatosIniciales } from './data/candidatosData'
 import { crearSolicitudDesdeCandidato } from './utils/solicitudes'
 import DetalleCandidato from './components/DetalleCandidato'
-import { cargarDatosDesdeBD, sincronizarEstadoEvaluacion } from './services/api'
+import Login from './components/Login'
+import PortalEmpleos from './components/PortalEmpleos'
+import AdminOfertas from './components/AdminOfertas'
+import {
+  cargarDatosDesdeBD,
+  sincronizarEstadoEvaluacion,
+  getUsuarioActual,
+  cerrarSesion,
+} from './services/api'
+
+function RutaProtegida({ usuario, children }) {
+  if (!usuario) return <Navigate to="/login" replace />
+  return children
+}
 
 export default function App() {
+  const [usuario, setUsuario] = useState(() => getUsuarioActual())
   const [solicitudes, setSolicitudes] = useState(solicitudesIniciales)
   const [candidatos, setCandidatos] = useState(candidatosIniciales)
   const [filtroActual, setFiltroActual] = useState('Todos')
@@ -21,8 +35,8 @@ export default function App() {
   const [modoSolicitudes, setModoSolicitudes] = useState('kanban')
   const navigate = useNavigate()
 
-  // Cargar registros reales desde PostgreSQL al iniciar
   useEffect(() => {
+    if (!usuario) return
     cargarDatosDesdeBD()
       .then((datos) => {
         if (datos && datos.solicitudesBD.length > 0) {
@@ -30,12 +44,15 @@ export default function App() {
           setCandidatos([...datos.candidatosBD, ...candidatosIniciales])
         }
       })
-      .catch(() => {
-        // Si el backend no está activo (ej. en tests), mantiene datos locales
-      })
-  }, [])
+      .catch(() => {})
+  }, [usuario])
 
-  // Wrapper de setSolicitudes para persistir en BD cuando cambia el estado en Kanban
+  const handleLogout = () => {
+    cerrarSesion()
+    setUsuario(null)
+    navigate('/login')
+  }
+
   const handleActualizarSolicitudes = (updater) => {
     setSolicitudes((prev) => {
       const siguiente = typeof updater === 'function' ? updater(prev) : updater
@@ -49,7 +66,6 @@ export default function App() {
     })
   }
 
-  // Filtrado de solicitudes
   const solicitudesBuscadas = solicitudes.filter((s) => {
     const texto = busqueda.toLowerCase()
     return (
@@ -59,45 +75,57 @@ export default function App() {
     )
   })
 
-  // Búsqueda + filtro por estado (para vista Tabla)
-  const solicitudesFiltradas = solicitudesBuscadas.filter((s) =>
-    filtroActual === 'Todos' || s.estado === filtroActual
+  const solicitudesFiltradas = solicitudesBuscadas.filter(
+    (s) => filtroActual === 'Todos' || s.estado === filtroActual
   )
 
-  // Función para agregar un nuevo candidato
   const handleGuardarCandidato = (nuevoCandidato) => {
     setCandidatos((prev) => [nuevoCandidato, ...prev])
-
-    // Todo postulante nuevo entra a la cola como solicitud Pendiente
-    setSolicitudes((prev) => [
-      crearSolicitudDesdeCandidato(nuevoCandidato, prev), 
-      ...prev
-    ])
-
+    setSolicitudes((prev) => [crearSolicitudDesdeCandidato(nuevoCandidato, prev), ...prev])
     navigate('/candidatos')
   }
 
   return (
     <div className="min-vh-100 bg-light">
-      <Navbar />
+      <Navbar usuario={usuario} onLogout={handleLogout} />
 
       <main className="container-fluid px-4 py-4">
         <Routes>
-          {/* Ruta del Dashboard */}
-          <Route 
-            path="/" 
-            element={<Dashboard solicitudes={solicitudes} candidatos={candidatos} />} 
-          />
-          <Route 
-            path="/dashboard" 
-            element={<Dashboard solicitudes={solicitudes} candidatos={candidatos} />} 
-          />
+          {/* Rutas Públicas (Sin Login) */}
+          <Route path="/empleos" element={<PortalEmpleos />} />
+          <Route path="/login" element={<Login onLoginExitoso={(u) => setUsuario(u)} />} />
 
-          {/* Ruta de Solicitudes con el tablero Kanban y Drag and Drop */}
+          {/* Rutas Protegidas con JWT */}
+          <Route
+            path="/"
+            element={
+              usuario ? (
+                <Dashboard solicitudes={solicitudes} candidatos={candidatos} />
+              ) : (
+                <Navigate to="/empleos" replace />
+              )
+            }
+          />
+          <Route
+            path="/dashboard"
+            element={
+              <RutaProtegida usuario={usuario}>
+                <Dashboard solicitudes={solicitudes} candidatos={candidatos} />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="/ofertas-admin"
+            element={
+              <RutaProtegida usuario={usuario}>
+                <AdminOfertas />
+              </RutaProtegida>
+            }
+          />
           <Route
             path="/solicitudes"
             element={
-              <>
+              <RutaProtegida usuario={usuario}>
                 <SubHeader
                   filtroActual={filtroActual}
                   setFiltroActual={setFiltroActual}
@@ -106,21 +134,21 @@ export default function App() {
                   solicitudes={solicitudes}
                   mostrarFiltroEstado={modoSolicitudes === 'tabla'}
                 />
-                <div className='d-flex justify-content-end align-items-center gap-2 mb-3'>
-                  <div className='btn-group btn-group-sm shadow-sm' role='group'>
+                <div className="d-flex justify-content-end align-items-center gap-2 mb-3">
+                  <div className="btn-group btn-group-sm shadow-sm" role="group">
                     <button
-                      type='button'
+                      type="button"
                       className={`btn ${modoSolicitudes === 'tabla' ? 'btn-primary text-white' : 'btn-light border'}`}
                       onClick={() => setModoSolicitudes('tabla')}
                     >
-                      <i className='bi bi-table me-1'></i> Tabla
+                      <i className="bi bi-table me-1"></i> Tabla
                     </button>
                     <button
-                      type='button'
+                      type="button"
                       className={`btn ${modoSolicitudes === 'kanban' ? 'btn-primary text-white' : 'btn-light border'}`}
                       onClick={() => setModoSolicitudes('kanban')}
                     >
-                      <i className='bi bi-kanban me-1'></i> Kanban
+                      <i className="bi bi-kanban me-1"></i> Kanban
                     </button>
                   </div>
                 </div>
@@ -128,30 +156,40 @@ export default function App() {
                 {modoSolicitudes === 'tabla' ? (
                   <SolicitudesTabla solicitudes={solicitudesFiltradas} />
                 ) : (
-                  <KanbanSolicitudes 
-                    solicitudes={solicitudesBuscadas} 
-                    setSolicitudes={handleActualizarSolicitudes} 
+                  <KanbanSolicitudes
+                    solicitudes={solicitudesBuscadas}
+                    setSolicitudes={handleActualizarSolicitudes}
                   />
                 )}
-              </>
+              </RutaProtegida>
             }
           />
-
-          {/* Ruta de Candidatos */}
           <Route
             path="/candidatos"
-            element={<CandidatosTabla candidatos={candidatos} />}
+            element={
+              <RutaProtegida usuario={usuario}>
+                <CandidatosTabla candidatos={candidatos} />
+              </RutaProtegida>
+            }
           />
-
-          <Route path="/candidatos/:id" element={<DetalleCandidato candidatos={candidatos} />} />
-
-          {/* Ruta para Registrar Candidato */}
+          <Route
+            path="/candidatos/:id"
+            element={
+              <RutaProtegida usuario={usuario}>
+                <DetalleCandidato candidatos={candidatos} />
+              </RutaProtegida>
+            }
+          />
           <Route
             path="/registro-candidato"
-            element={<RegistroCandidato 
-              onAgregar={handleGuardarCandidato}
-              onCancelar={() => navigate('/candidatos')} 
-            />}
+            element={
+              <RutaProtegida usuario={usuario}>
+                <RegistroCandidato
+                  onAgregar={handleGuardarCandidato}
+                  onCancelar={() => navigate('/candidatos')}
+                />
+              </RutaProtegida>
+            }
           />
         </Routes>
       </main>
