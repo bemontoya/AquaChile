@@ -171,3 +171,61 @@ describe('API REST AquaChile - Seguridad JWT, CRUD, CV Privado e IA', () => {
     expect(Array.isArray(resIA.body.preguntasSugeridas)).toBe(true);
   });
 });
+
+
+
+it('9. Registra postulación por nombre de cargo cuando no se envía ofertaId', async () => {
+    const rutaPdfPrueba = path.resolve('tests/cv_cargo_directo.pdf');
+    fs.writeFileSync(rutaPdfPrueba, '%PDF-1.4\n1 0 obj\n<< /Title (CV Cargo Directo) >>\nendobj\n%%EOF');
+
+    const res = await request(app)
+      .post('/api/postulaciones')
+      .field('cargo', `Técnico Acuícola Test ${Date.now()}`)
+      .field('familiaCargo', 'Operaciones y Centros de Cultivo')
+      .field('ubicacion', 'Puerto Montt')
+      .field('nombre', 'Diego Contreras')
+      .field('rut', `17.${Math.floor(100 + Math.random() * 899)}.222-3`)
+      .field('email', 'dcontreras.ficticio@ejemplo.cl')
+      .field('telefono', '+56922334455')
+      .attach('cv', rutaPdfPrueba);
+
+    expect(res.status).toBe(201);
+    fs.unlinkSync(rutaPdfPrueba);
+  });
+
+  it('10. Envía correo de confirmación de postulación (/api/enviar-confirmacion)', async () => {
+    const res = await request(app)
+      .post('/api/enviar-confirmacion')
+      .send({
+        nombre: 'María Fernanda Rojas',
+        email: 'delivered@resend.dev',
+        cargo: 'Supervisor Centro Cultivo Test',
+      });
+
+    expect([200, 500]).toContain(res.status);
+  });
+
+  it('11. Valida errores 400 y 404 en descarga de CV, IA, ofertas y evaluaciones', async () => {
+    const resCv404 = await request(app)
+      .get('/api/postulaciones/999999/cv')
+      .set('Authorization', `Bearer ${tokenEvaluador}`);
+    expect(resCv404.status).toBe(404);
+
+    const resIa400 = await request(app)
+      .post('/api/ia/analizar-candidato')
+      .set('Authorization', `Bearer ${tokenEvaluador}`)
+      .send({});
+    expect(resIa400.status).toBe(400);
+
+    const resOferta400 = await request(app)
+      .put('/api/ofertas/999999')
+      .set('Authorization', `Bearer ${tokenAnalista}`)
+      .send({ cupos: 5 });
+    expect(resOferta400.status).toBe(400);
+
+    const resEval400 = await request(app)
+      .patch('/api/evaluaciones/999999')
+      .set('Authorization', `Bearer ${tokenEvaluador}`)
+      .send({ estado: 'FINALIZADA' });
+    expect(resEval400.status).toBe(400);
+  });

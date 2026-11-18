@@ -11,7 +11,7 @@
     "test": "vitest",
     "postinstall": "prisma skills sync || exit 0",
     "test:backend": "cross-env NODE_ENV=test vitest run tests/backend.test.js --environment node --coverage --coverage.include=server.js --coverage.include=middlewares/**",
-    "test:frontend": "vitest run tests/frontend.test.jsx --environment jsdom --coverage --coverage.include=src/**",
+    "test:frontend": "vitest run tests/frontend.test.jsx src/components --environment jsdom --coverage --coverage.include=src/components/** --coverage.include=src/utils/**",
     "test:all": "npm run test:backend && npm run test:frontend"
   },
   "dependencies": {

@@ -1,6 +1,84 @@
 import { useNavigate } from 'react-router-dom';
 import GraficoPorArea from './GraficoPorArea';
 
+const COLOR_PRIMARIO = '#0d3c61';
+const tarjeta = { border: '1px solid #e5e7eb', boxShadow: 'none' };
+
+// Máximo de filas visibles en cada lista: la tarjeta crece con los registros
+// hasta este límite. Usa Infinity para mostrar todos.
+const MAX_SOLICITUDES_VISIBLES = 8;
+const MAX_CANDIDATOS_VISIBLES = 5;
+
+// Único color "de estado": un punto discreto junto al texto
+const COLOR_ESTADO = {
+  Pendiente: '#b7791f',
+  'En proceso': COLOR_PRIMARIO,
+  Finalizada: '#9ca3af',
+};
+
+function Punto({ color }) {
+  return (
+    <span
+      style={{
+        display: 'inline-block',
+        width: 8,
+        height: 8,
+        borderRadius: '50%',
+        backgroundColor: color,
+        flexShrink: 0,
+      }}
+    />
+  );
+}
+
+function Estado({ estado }) {
+  return (
+    <span className="d-inline-flex align-items-center gap-2 small text-secondary text-nowrap">
+      <Punto color={COLOR_ESTADO[estado] || '#9ca3af'} />
+      {estado}
+    </span>
+  );
+}
+
+function Metrica({ titulo, valor, nota, color }) {
+  return (
+    <div className="col-12 col-sm-6 col-lg-3">
+      <div className="card rounded-3 p-3 h-100" style={tarjeta}>
+        <div className="d-flex justify-content-between align-items-center mb-2">
+          <span
+            className="text-muted text-uppercase"
+            style={{ fontSize: '0.7rem', letterSpacing: '0.05em' }}
+          >
+            {titulo}
+          </span>
+          {nota && (
+            <span className="d-inline-flex align-items-center gap-1 text-muted small">
+              <Punto color={color} />
+              {nota}
+            </span>
+          )}
+        </div>
+        <div className="fs-2 fw-semibold text-dark lh-1">{valor}</div>
+      </div>
+    </div>
+  );
+}
+
+function EncabezadoSeccion({ titulo, enlace, onClick }) {
+  return (
+    <div className="d-flex justify-content-between align-items-center mb-1">
+      <h5 className="fs-6 fw-semibold text-dark mb-0">{titulo}</h5>
+      <button
+        type="button"
+        className="btn btn-link btn-sm p-0 text-decoration-none link-nav"
+        onClick={onClick}
+      >
+        {enlace} <i className="bi bi-arrow-right ms-1"></i>
+      </button>
+    </div>
+  );
+}
+
 // Recibimos 'solicitudes' y 'candidatos' como props
 export default function Dashboard({ solicitudes = [], candidatos = [] }) {
   const navigate = useNavigate();
@@ -9,265 +87,152 @@ export default function Dashboard({ solicitudes = [], candidatos = [] }) {
   const enProceso = solicitudes.filter((s) => s.estado === 'En proceso').length;
   const finalizadas = solicitudes.filter((s) => s.estado === 'Finalizada').length;
   const activas = pendientes + enProceso;
-  const prioritarias = solicitudes.filter((s) => s.estado !== 'Finalizada').slice(-4).reverse();
-  const ultimosCandidatos = candidatos.slice(-3).reverse();
+  // 1) filter: dejamos solo las solicitudes que aún no están finalizadas
+  // 2) reverse: damos vuelta la lista para que las más nuevas queden primero
+  // 3) slice(0, N): tomamos solo las primeras N filas (el límite de arriba)
+  const prioritarias = solicitudes
+    .filter((s) => s.estado !== 'Finalizada')
+    .reverse()
+    .slice(0, MAX_SOLICITUDES_VISIBLES);
 
-  const claseEstado = (estado) => {
-    if (estado === 'Finalizada') return 'bg-light text-secondary border fw-medium small';
-    if (estado === 'En proceso') return 'bg-primary-subtle text-primary fw-medium small';
-    return 'bg-warning-subtle text-warning-emphasis border fw-medium small';
-  };
+  // [...candidatos] hace una copia, así reverse() no modifica la lista original
+  const ultimosCandidatos = [...candidatos].reverse().slice(0, MAX_CANDIDATOS_VISIBLES);
 
   return (
     <div className="w-100">
+      <style>{`
+        .link-nav { color: ${COLOR_PRIMARIO}; font-weight: 500; }
+        .link-nav:hover { color: ${COLOR_PRIMARIO}; text-decoration: underline !important; }
+      `}</style>
 
-      {/* Encabezado del dashboard */}
-      <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-2">
-        <div>
-          <div className="text-primary small fw-bold text-uppercase tracking-wider mb-1" style={{ fontSize: '0.75rem' }}>
-            <i className="bi bi-grid-fill me-1"></i> Módulo Central de Evaluación
-          </div>
-          <h2 className="h3 fw-bold mb-1 text-dark">Gestión de Evaluaciones Psicolaborales</h2>
-          <p className="text-muted small mb-0">Panel de control y métricas globales del proceso de selección</p>
-        </div>
-
+      {/* Encabezado */}
+      <div className="mb-4">
+        <h1 className="h4 fw-semibold text-dark mb-1">Gestión de evaluaciones psicolaborales</h1>
+        <p className="text-muted small mb-0">
+          Panel de control y métricas globales del proceso de selección
+        </p>
       </div>
 
-      {/* Métricas superiores */}
+      {/* Métricas */}
       <div className="row g-3 mb-4">
-
-        {/* Total Solicitudes */}
-        <div className="col-12 col-sm-6 col-lg-3">
-          <div className="card border-0 shadow-sm rounded-3 p-3 h-100">
-            <div className="d-flex justify-content-between align-items-start mb-2">
-              <span className="text-muted fw-bold small text-uppercase" style={{ fontSize: '0.7rem' }}>
-                Total Solicitudes
-              </span>
-            </div>
-            <div className="h2 fw-bold text-dark mb-0">{solicitudes.length}</div>
-          </div>
-        </div>
-
-        {/* Pendientes */}
-        <div className="col-12 col-sm-6 col-lg-3">
-          <div className="card border-0 shadow-sm rounded-3 p-3 h-100">
-            <div className="d-flex justify-content-between align-items-start mb-2">
-              <span className="text-muted fw-bold small text-uppercase" style={{ fontSize: '0.7rem' }}>
-                Pendientes
-              </span>
-              <span className="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill fw-medium small">
-                • Por asignar
-              </span>
-            </div>
-            <div className="h2 fw-bold text-dark mb-0">{pendientes}</div>
-          </div>
-        </div>
-
-        {/* En proceso */}
-        <div className="col-12 col-sm-6 col-lg-3">
-          <div className="card border-0 shadow-sm rounded-3 p-3 h-100">
-            <div className="d-flex justify-content-between align-items-start mb-2">
-              <span className="text-muted fw-bold small text-uppercase" style={{ fontSize: '0.7rem' }}>
-                En Proceso
-              </span>
-              <span className="badge bg-primary-subtle text-primary rounded-pill fw-medium small">
-                • En curso
-              </span>
-            </div>
-            <div className="h2 fw-bold text-dark mb-0">{enProceso}</div>
-          </div>
-        </div>
-
-        {/* Finalizadas */}
-        <div className="col-12 col-sm-6 col-lg-3">
-          <div className="card border-0 shadow-sm rounded-3 p-3 h-100">
-            <div className="d-flex justify-content-between align-items-start mb-2">
-              <span className="text-muted fw-bold small text-uppercase" style={{ fontSize: '0.7rem' }}>
-                Finalizadas
-              </span>
-              <span className="badge bg-success-subtle text-success rounded-pill fw-medium small">
-                <i className="bi bi-check-circle me-1"></i> Completas
-              </span>
-            </div>
-            <div className="h2 fw-bold text-dark mb-0">{finalizadas}</div>
-          </div>
-        </div>
-
+        <Metrica titulo="Total solicitudes" valor={solicitudes.length} />
+        <Metrica titulo="Pendientes" valor={pendientes} nota="Por asignar" color={COLOR_ESTADO.Pendiente} />
+        <Metrica titulo="En proceso" valor={enProceso} nota="En curso" color={COLOR_ESTADO['En proceso']} />
+        <Metrica titulo="Finalizadas" valor={finalizadas} nota="Completas" color={COLOR_ESTADO.Finalizada} />
       </div>
 
-      {/* Fila principal: gráfico por unidad + gestión de solicitudes */}
-      <div className="row g-4 mb-4">
-
-        {/* Gráfico de evaluaciones por unidad */}
+      {/* Solicitudes + gráfico (cada tarjeta toma la altura de su contenido) */}
+      <div className="row g-4 mb-4 align-items-start">
         <div className="col-12 col-lg-5 order-2">
           <GraficoPorArea solicitudes={solicitudes} />
         </div>
 
-        {/* Gestión de solicitudes */}
         <div className="col-12 col-lg-7 order-1">
-          <div className="card border-0 shadow-sm rounded-3 h-100 d-flex flex-column">
-
-            <div className="card-body p-4 flex-grow-1">
-              <div className="d-flex justify-content-between align-items-center mb-2">
-                <h5 className="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
-                  <span
-                    className="rounded d-inline-flex align-items-center justify-content-center text-white"
-                    style={{ backgroundColor: '#0d3c61', width: '38px', height: '38px' }}
-                  >
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="#82b1ff"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      {/* Cuerpo del portapapeles */}
-                      <rect x="4" y="5" width="16" height="16" rx="2" />
-                      {/* Clip */}
-                      <path d="M9 5V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                      {/* Check */}
-                      <polyline points="9 13 11 15 15 10" />
-                    </svg>  
-                  </span>
-                  <span style={{ color: '#0d3c61' }} className="fw-bold">
-                    Gestión de Solicitudes
-                  </span>
-                </h5>
-                <span className="badge bg-light text-secondary border fw-normal">Flujo Psicométrico</span>
-              </div>
-
-              <p className="text-muted small mb-4">
-                Control integral del flujo evaluativo, asignación de baterías técnicas, calendarización con psicólogos evaluadores y entrega formal de informes de aptitud laboral.
-              </p>
-
-              <div className="d-flex justify-content-between align-items-center mb-3">
-                <span className="fw-bold text-muted small text-uppercase" style={{ fontSize: '0.7rem' }}>
-                  Evaluaciones Recientes Prioritarias
-                </span>
-                <span className="text-muted small"><strong>{activas}</strong> activas</span>
-              </div>
-
-              {/* Lista de solicitudes recientes */}
-              <div className="d-flex flex-column gap-2 mb-3">
-                {prioritarias.map((s) => (
-                  <div key={s.id} className="d-flex justify-content-between align-items-center p-2 rounded border bg-light-subtle">
-                    <div>
-                      <div className="fw-bold text-dark small">{s.id} <span className="fw-normal text-muted">• {s.area}</span></div>
-                      <div className="text-muted small" style={{ fontSize: '0.75rem' }}>
-                        Psic. {s.evaluador} • {s.cargo}
-                      </div>
-                    </div>
-                    <span className={`badge rounded-pill fw-semibold px-3 py-1 ${claseEstado(s.estado)}`}>{s.estado}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Botón módulo solicitudes adaptado a React Router */}
-            <div className="card-footer bg-transparent border-0 p-3 pt-0 d-flex justify-content-center">
-              <button
-                type="button"
-                className="btn btn-sm text-white fw-semibold d-flex align-items-center justify-content-center gap-2"
-                style={{ backgroundColor: '#0d3c61', borderColor: '#0d3c61' }}
+          <div className="card rounded-3" style={tarjeta}>
+            <div className="card-body p-4">
+              <EncabezadoSeccion
+                titulo="Gestión de solicitudes"
+                enlace="Ver todas"
                 onClick={() => navigate('/solicitudes')}
-              >
-                Ir a Gestión de Solicitudes <i className="bi bi-arrow-right"></i>
-              </button>
-            </div>
-
-          </div>
-        </div>
-
-      </div>
-
-      {/* Fila: gestión de candidatos (ancho completo) */}
-      <div className="row g-4 mb-4">
-
-        {/* Gestión de candidatos */}
-        <div className="col-12">
-          <div className="card border-0 shadow-sm rounded-3 h-100 d-flex flex-column">
-
-            <div className="card-body p-4 flex-grow-1">
-              <div className="d-flex justify-content-between align-items-center mb-2">
-                <h5 className="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
-                  <span
-                    className="rounded d-inline-flex align-items-center justify-content-center p-2"
-                    style={{ backgroundColor: '#0d3c61', width: '38px', height: '38px' }}
-                  >
-                    <svg
-                      width="22"
-                      height="22"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="#82b1ff"
-                      strokeWidth="2.2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <circle cx="10" cy="7" r="4" />
-                      <path d="M3 21v-2a4 4 0 0 1 4-4h4" />
-                      <circle cx="16.5" cy="15.5" r="3.5" />
-                      <line x1="19" y1="18" x2="22" y2="21" />
-                    </svg>
-                  </span>
-                  <span style={{ color: '#0d3c61' }} className="fw-bold">
-                    Gestión de Candidatos
-                  </span>
-                </h5>
-              </div>
-
+              />
               <p className="text-muted small mb-4">
-                Administración centralizada de postulantes, registro integral de fichas técnicas, historial de postulaciones y consolidado de perfiles psicolaborales para plantas y centros de cultivo.
+                Control del flujo evaluativo, asignación de baterías y entrega de informes de aptitud laboral.
               </p>
 
-              <div className="d-flex justify-content-between align-items-center mb-3">
-                <span className="fw-bold text-muted small text-uppercase" style={{ fontSize: '0.7rem' }}>
-                  Últimos Candidatos Agregados
+              <div className="d-flex justify-content-between align-items-center mb-2">
+                <span
+                  className="text-muted text-uppercase"
+                  style={{ fontSize: '0.7rem', letterSpacing: '0.05em' }}
+                >
+                  Evaluaciones recientes prioritarias
                 </span>
-                <span className="text-muted small">Total activos: <strong>{candidatos.length}</strong></span>
+                <span className="text-muted small">
+                  <strong className="text-dark">{activas}</strong> activas
+                </span>
               </div>
 
-              {/* Lista de candidatos */}
-              <div className="d-flex flex-column gap-2 mb-3">
-                {ultimosCandidatos.map((c) => (
-                  <div key={c.id} className="d-flex justify-content-between align-items-center p-2 rounded border bg-light-subtle">
-                    <div className="d-flex align-items-center gap-2">
-                      <div className="bg-primary-subtle text-primary fw-bold rounded-circle d-flex align-items-center justify-content-center" style={{ width: '38px', height: '38px' }}>
-                        {c.iniciales}
+              <ul className="list-group list-group-flush">
+                {prioritarias.length === 0 && (
+                  <li className="list-group-item px-0 text-muted small">Sin solicitudes activas.</li>
+                )}
+                {prioritarias.map((s) => (
+                  <li
+                    key={s.id}
+                    className="list-group-item px-0 d-flex justify-content-between align-items-center"
+                  >
+                    <div>
+                      <div className="fw-medium text-dark small">
+                        {s.id} <span className="fw-normal text-muted">· {s.area}</span>
                       </div>
-                      <div>
-                        <div className="fw-bold text-dark small">{c.nombre}</div>
-                        <div className="text-muted small" style={{ fontSize: '0.75rem' }}>
-                          RUT: {c.rut} • {c.cargo}
-                        </div>
+                      <div className="text-muted" style={{ fontSize: '0.75rem' }}>
+                        Psic. {s.evaluador} · {s.cargo}
                       </div>
                     </div>
-                    <span className="badge bg-light text-secondary border fw-normal small">{c.ubicacion}</span>
-                  </div>
+                    <Estado estado={s.estado} />
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
-
-            {/* Botón módulo candidatos adaptado a React Router */}
-            <div className="card-footer bg-transparent border-0 p-3 pt-0 d-flex justify-content-center">
-              <button
-                type="button"
-                className="btn btn-sm text-white fw-semibold d-flex align-items-center justify-content-center gap-2"
-                style={{ backgroundColor: '#0d3c61', borderColor: '#0d3c61' }}
-                onClick={() => navigate('/candidatos')}
-              >
-                Ir a Gestión de Candidatos <i className="bi bi-arrow-right"></i>
-              </button>
-            </div>
-
           </div>
         </div>
-
       </div>
 
+      {/* Candidatos */}
+      <div className="card rounded-3 mb-4" style={tarjeta}>
+        <div className="card-body p-4">
+          <EncabezadoSeccion
+            titulo="Gestión de candidatos"
+            enlace="Ver todos"
+            onClick={() => navigate('/candidatos')}
+          />
+          <p className="text-muted small mb-4">
+            Administración de postulantes, fichas técnicas y perfiles psicolaborales para plantas y centros de cultivo.
+          </p>
+
+          <div className="d-flex justify-content-between align-items-center mb-2">
+            <span
+              className="text-muted text-uppercase"
+              style={{ fontSize: '0.7rem', letterSpacing: '0.05em' }}
+            >
+              Últimos candidatos agregados
+            </span>
+            <span className="text-muted small">
+              Total activos: <strong className="text-dark">{candidatos.length}</strong>
+            </span>
+          </div>
+
+          <ul className="list-group list-group-flush">
+            {ultimosCandidatos.length === 0 && (
+              <li className="list-group-item px-0 text-muted small">Aún no hay candidatos registrados.</li>
+            )}
+            {ultimosCandidatos.map((c) => (
+              <li
+                key={c.id}
+                className="list-group-item px-0 d-flex justify-content-between align-items-center"
+              >
+                <div className="d-flex align-items-center gap-3">
+                  <div
+                    className="bg-light border text-secondary fw-semibold rounded-circle d-flex align-items-center justify-content-center small"
+                    style={{ width: 36, height: 36 }}
+                  >
+                    {c.iniciales}
+                  </div>
+                  <div>
+                    <div className="fw-medium text-dark small">{c.nombre}</div>
+                    <div className="text-muted" style={{ fontSize: '0.75rem' }}>
+                      RUT: {c.rut} · {c.cargo}
+                    </div>
+                  </div>
+                </div>
+                <span className="text-muted small text-nowrap">
+                  <i className="bi bi-geo-alt me-1"></i>
+                  {c.ubicacion}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
     </div>
   );
 }
