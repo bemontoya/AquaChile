@@ -2,6 +2,34 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FAMILIAS_CANDIDATOS } from '../data/catalogos';
 
+// Color principal de AquaChile: es el único color de acento de la pantalla
+const COLOR_PRIMARIO = '#0d3c61';
+
+// Estilo común de las tarjetas: borde fino y sin sombra
+const tarjeta = { border: '1px solid #e5e7eb', boxShadow: 'none' };
+
+// Saca las iniciales del nombre (sirve si el candidato no trae el campo "iniciales")
+const obtenerIniciales = (nombre = '') =>
+  nombre
+    .split(' ')       // separa el nombre en palabras
+    .filter(Boolean)  // elimina espacios vacíos
+    .slice(0, 2)      // usa solo las dos primeras palabras
+    .map((palabra) => palabra[0].toUpperCase())
+    .join('');
+
+// Prepara un texto para compararlo: minúsculas y sin tildes.
+// Así "Muñoz", "munoz" y "MUÑOZ" se consideran iguales.
+// (texto ?? '') evita errores si el campo viene vacío (null o undefined)
+const normalizar = (texto) =>
+  String(texto ?? '')
+    .toLowerCase()
+    .normalize('NFD')                  // separa cada letra de su tilde
+    .replace(/[\u0300-\u036f]/g, '');  // elimina las tildes
+
+// Deja el RUT solo con números y la K: quita puntos, guiones y espacios.
+// Así "18.636.789-K" se puede encontrar escribiendo "18636789" o "18.636".
+const limpiarRut = (texto) => normalizar(texto).replace(/[.\-\s]/g, '');
+
 export default function CandidatosTabla({ candidatos }) {
   // Hook de navegación de React Router
   const navigate = useNavigate();
@@ -11,134 +39,162 @@ export default function CandidatosTabla({ candidatos }) {
   // Familia de cargo seleccionada para filtrar
   const [filtroFamilia, setFiltroFamilia] = useState('Todos');
 
+  // Lo que escribió el usuario, ya preparado para comparar
+  const termino = normalizar(busqueda.trim());
+  const terminoRut = limpiarRut(busqueda);
+
   // Filtrado dinámico por búsqueda o familia de cargo
   const candidatosFiltrados = candidatos.filter((item) => {
     const coincideFamilia = filtroFamilia === 'Todos' || item.familiaCargo === filtroFamilia;
-    const coincideBusqueda = 
-      item.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-      item.cargo.toLowerCase().includes(busqueda.toLowerCase()) ||
-      item.rut.includes(busqueda);
+
+    // Si el buscador está vacío, todos coinciden.
+    // Si no, buscamos el texto en el nombre, el cargo o el RUT.
+    const coincideBusqueda =
+      termino === '' ||
+      normalizar(item.nombre).includes(termino) ||
+      normalizar(item.cargo).includes(termino) ||
+      (terminoRut !== '' && limpiarRut(item.rut).includes(terminoRut));
 
     return coincideFamilia && coincideBusqueda;
   });
 
+  // Opciones del filtro rápido: "Todos" + una opción por cada familia de cargo
+  const opcionesFiltro = [
+    { id: 'Todos', label: `Todos (${candidatos.length})` },
+    ...FAMILIAS_CANDIDATOS.map((familia) => ({ id: familia, label: familia })),
+  ];
+
   return (
     <div className="w-100">
-      
-      <div className="text-muted small mb-1 text-uppercase fw-semibold" style={{ fontSize: '0.75rem', letterSpacing: '0.5px' }}>
-        GESTIÓN DE PERSONAS &gt; RECLUTAMIENTO Y SELECCIÓN
+      {/* Estilos para el foco del buscador y el efecto al pasar el mouse */}
+      <style>{`
+        .buscador:focus {
+          border-color: ${COLOR_PRIMARIO};
+          box-shadow: 0 0 0 0.2rem rgba(13, 60, 97, 0.12);
+        }
+        .btn-principal:hover { background-color: #0a2f4d !important; }
+        .chip:hover { background-color: #f3f4f6; }
+      `}</style>
+
+      {/* Ruta de navegación (breadcrumb) */}
+      <div className="text-muted small mb-1" style={{ fontSize: '0.75rem' }}>
+        Gestión de personas &gt; Reclutamiento y selección
       </div>
 
       {/* Encabezado principal */}
       <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
         <div>
-          <h2 className="h3 fw-bold mb-1 text-dark">Listado de Candidatos</h2>
+          <h1 className="h4 fw-semibold mb-1 text-dark">Listado de candidatos</h1>
           <p className="text-muted small mb-0">
             Registro maestro de postulantes a evaluaciones psicolaborales
           </p>
         </div>
 
-        {/* Métrica de resumen */}
-        <div className="d-flex gap-3">
-          <div className="card border-0 shadow-sm px-3 py-2 d-flex flex-row align-items-center gap-3 rounded-3 bg-white">
-            <i className="bi bi-person-workspace text-primary fs-4"></i>
-            <div>
-              <div className="fw-bold h5 mb-0 text-dark">{candidatos.length}</div>
-              <div className="text-muted small" style={{ fontSize: '0.75rem' }}>Postulantes Totales</div>
-            </div>
-          </div>
+        {/* Total de postulantes: texto simple, sin caja ni ícono de color */}
+        <div className="text-md-end">
+          <div className="fs-3 fw-semibold text-dark lh-1">{candidatos.length}</div>
+          <div className="text-muted small">Postulantes totales</div>
         </div>
       </div>
 
+      {/* Buscador + botón de acción */}
       <div className="d-flex flex-column flex-md-row justify-content-between align-items-stretch align-items-md-center gap-3 mb-3">
-        
         {/* Buscador */}
-        <div className="input-group shadow-sm bg-white rounded-3" style={{ maxWidth: '450px' }}>
-          <span className="input-group-text bg-white border-0 text-muted ps-3">
+        <div className="input-group" style={{ maxWidth: '420px' }}>
+          <span className="input-group-text bg-white text-muted border-end-0">
             <i className="bi bi-search"></i>
           </span>
           <input
             type="text"
-            className="form-control border-0 ps-1"
-            placeholder="Buscar por nombre o cargo..."
+            className="form-control buscador border-start-0 ps-1"
+            placeholder="Buscar por nombre, cargo o RUT..."
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
           />
         </div>
 
         {/* Botón de acción adaptado a React Router */}
-        <div className="d-flex gap-2 justify-content-end">
-          <button 
-            type="button" 
-            className="btn text-white px-4 fw-bold shadow-sm d-flex align-items-center gap-2"
-            style={{ backgroundColor: '#0d3c61', borderColor: '#0d3c61' }}
-            onClick={() => navigate('/registro-candidato')}
-          >
-            <i className="bi bi-plus-lg"></i>  Registrar Nuevo Candidato
-          </button>
-        </div>
-
+        <button
+          type="button"
+          className="btn btn-principal text-white px-4 fw-semibold d-flex align-items-center justify-content-center gap-2"
+          style={{ backgroundColor: COLOR_PRIMARIO }}
+          onClick={() => navigate('/registro-candidato')}
+        >
+          <i className="bi bi-plus-lg"></i> Registrar nuevo candidato
+        </button>
       </div>
 
-      {/* Barra de Filtro Rápido */}
-      <div className="p-2 mb-3 bg-light rounded-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
-        <div className="d-flex align-items-center gap-2 flex-wrap">
-          <span className="fw-bold text-secondary small text-uppercase me-2" style={{ fontSize: '0.75rem' }}>
-            FILTRO RÁPIDO:
-          </span>
-          {[
-            { id: 'Todos', label: `Todos (${candidatos.length})` },
-            ...FAMILIAS_CANDIDATOS.map((familia) => ({ id: familia, label: familia }))
-          ].map((item) => (
+      {/* Filtro rápido por familia de cargo */}
+      <div className="d-flex align-items-center gap-2 flex-wrap mb-3">
+        <span
+          className="text-muted text-uppercase me-1"
+          style={{ fontSize: '0.7rem', letterSpacing: '0.05em' }}
+        >
+          Filtro rápido
+        </span>
+        {opcionesFiltro.map((opcion) => {
+          // ¿Es la opción que está seleccionada ahora?
+          const activa = filtroFamilia === opcion.id;
+          return (
             <button
-              key={item.id}
+              key={opcion.id}
               type="button"
-              className={`btn btn-sm ${
-                filtroFamilia === item.id 
-                  ? 'btn-primary fw-semibold' 
-                  : 'btn-light border text-secondary'
+              // Activa: azul marino relleno. Inactiva: blanca con borde gris
+              className={`btn btn-sm chip ${
+                activa ? 'text-white fw-medium' : 'bg-white border text-secondary'
               }`}
-              onClick={() => setFiltroFamilia(item.id)}
+              style={activa ? { backgroundColor: COLOR_PRIMARIO, borderColor: COLOR_PRIMARIO } : {}}
+              onClick={() => setFiltroFamilia(opcion.id)}
             >
-              {item.label}
+              {opcion.label}
             </button>
-          ))}
-        </div>
-        <div className="text-muted small d-none d-lg-block" style={{ fontSize: '0.75rem' }}>
-          Base de Postulaciones AquaChile
-        </div>
+          );
+        })}
       </div>
 
-      {/* Tabla de Candidatos */}
-      <div className="card border-0 shadow-sm rounded-3 mb-3 overflow-hidden">
+      {/* Tabla de candidatos */}
+      <div className="card rounded-3 mb-3 overflow-hidden" style={tarjeta}>
         <div className="table-responsive">
           <table className="table table-hover align-middle mb-0">
-            <thead className="table-light border-bottom text-muted small text-uppercase" style={{ fontSize: '0.75rem' }}>
+            <thead
+              className="table-light text-muted text-uppercase"
+              style={{ fontSize: '0.7rem', letterSpacing: '0.05em' }}
+            >
               <tr>
-                <th scope="col" className="ps-4 py-3">NOMBRE COMPLETO</th>
-                <th scope="col" className="py-3">CORREO ELECTRÓNICO</th>
-                <th scope="col" className="py-3">TELÉFONO</th>
-                <th scope="col" className="py-3">CARGO POSTULACIÓN</th>
-                <th scope="col" className="py-3">FAMILIA DE CARGO</th>
-                <th scope="col" className="text-end pe-4 py-3">ACCIONES</th>
+                <th scope="col" className="ps-4 py-3 fw-medium">Nombre completo</th>
+                <th scope="col" className="py-3 fw-medium">Correo electrónico</th>
+                <th scope="col" className="py-3 fw-medium">Teléfono</th>
+                <th scope="col" className="py-3 fw-medium">Cargo postulación</th>
+                <th scope="col" className="py-3 fw-medium">Familia de cargo</th>
+                <th scope="col" className="text-end pe-4 py-3 fw-medium">Acciones</th>
               </tr>
             </thead>
             <tbody>
-              {candidatosFiltrados.map((item) => (
-                <tr key={item.id}>
-                  
+              {/* Mensaje cuando la búsqueda no encuentra nada */}
+              {candidatosFiltrados.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="text-center text-muted py-5">
+                    No se encontraron candidatos con esos criterios.
+                  </td>
+                </tr>
+              )}
+
+              {/* La key combina id + posición: así React no se confunde si dos
+                  candidatos llegan con el mismo id (datos de prueba repetidos) */}
+              {candidatosFiltrados.map((item, indice) => (
+                <tr key={`${item.id}-${indice}`}>
                   {/* Nombre completo y RUT */}
                   <td className="ps-4 py-3">
                     <div className="d-flex align-items-center gap-3">
-                      <div 
-                        className="bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0"
-                        style={{ width: '40px', height: '40px', fontSize: '0.9rem' }}
+                      <div
+                        className="bg-light border text-secondary rounded-circle d-flex align-items-center justify-content-center fw-semibold flex-shrink-0"
+                        style={{ width: '36px', height: '36px', fontSize: '0.8rem' }}
                       >
-                        {item.iniciales}
+                        {item.iniciales || obtenerIniciales(item.nombre)}
                       </div>
                       <div>
-                        <div className="fw-bold text-dark">{item.nombre}</div>
-                        <div className="text-muted small" style={{ fontSize: '0.75rem' }}>
+                        <div className="fw-medium text-dark">{item.nombre}</div>
+                        <div className="text-muted" style={{ fontSize: '0.75rem' }}>
                           RUT: {item.rut}
                         </div>
                       </div>
@@ -146,46 +202,43 @@ export default function CandidatosTabla({ candidatos }) {
                   </td>
 
                   <td className="text-secondary small">{item.email}</td>
-                  <td className="text-secondary small">{item.telefono}</td>
+                  <td className="text-secondary small text-nowrap">{item.telefono}</td>
 
+                  {/* Cargo arriba y ubicación abajo (en vez de un badge al lado) */}
                   <td>
-                    <div className="d-flex align-items-center gap-2 flex-wrap">
-                      <span className="text-dark small fw-medium">{item.cargo}</span>
-                      <span className="badge bg-light text-secondary border fw-normal" style={{ fontSize: '0.7rem' }}>
-                        {item.ubicacion}
-                      </span>
+                    <div className="text-dark small fw-medium">{item.cargo}</div>
+                    <div className="text-muted" style={{ fontSize: '0.75rem' }}>
+                      <i className="bi bi-geo-alt me-1"></i>
+                      {item.ubicacion}
                     </div>
                   </td>
 
-                  <td>
-                    <span className="badge bg-secondary-subtle text-dark border-0 fw-medium px-3 py-2 rounded-pill d-inline-flex align-items-center gap-2">
-                      <span className="bg-primary rounded-circle" style={{ width: '6px', height: '6px' }}></span>
-                      {item.familiaCargo}
-                    </span>
-                  </td>
+                  {/* Familia de cargo como texto simple, sin pastilla de color */}
+                  <td className="text-secondary small">{item.familiaCargo}</td>
 
                   <td className="text-end pe-4">
-                    <div className="d-flex gap-1 justify-content-end">
-                      <button type="button" className="btn btn-sm btn-light border text-secondary me-1"
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-light border text-secondary text-nowrap"
                       onClick={() => navigate(`/candidatos/${item.id}`)}
-                      >
-
-                        <i className="bi bi-eye me-1"></i> Ver detalles
-                        
-                      </button>
-                    </div>
+                    >
+                      <i className="bi bi-eye me-1"></i> Ver detalles
+                    </button>
                   </td>
-
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
 
-        {/* Pie de Tabla */}
+        {/* Pie de tabla */}
         <div className="card-footer bg-white border-top py-3 px-4 d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
           <div className="text-muted small">
-            Mostrando <strong>1 a {candidatosFiltrados.length}</strong> de <strong>{candidatos.length}</strong> candidatos
+            Mostrando{' '}
+            <strong className="text-dark">
+              {candidatosFiltrados.length === 0 ? 0 : 1} a {candidatosFiltrados.length}
+            </strong>{' '}
+            de <strong className="text-dark">{candidatos.length}</strong> candidatos
           </div>
 
           <nav aria-label="Navegación de páginas">
@@ -194,7 +247,12 @@ export default function CandidatosTabla({ candidatos }) {
                 <span className="page-link">&lt; Anterior</span>
               </li>
               <li className="page-item active">
-                <span className="page-link" style={{ backgroundColor: '#0d3c61', borderColor: '#0d3c61' }}>1</span>
+                <span
+                  className="page-link"
+                  style={{ backgroundColor: COLOR_PRIMARIO, borderColor: COLOR_PRIMARIO }}
+                >
+                  1
+                </span>
               </li>
               <li className="page-item disabled">
                 <span className="page-link">Siguiente &gt;</span>
@@ -203,7 +261,6 @@ export default function CandidatosTabla({ candidatos }) {
           </nav>
         </div>
       </div>
-
     </div>
   );
 }
