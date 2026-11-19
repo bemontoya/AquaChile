@@ -1,3 +1,4 @@
+import { API_URL } from '../services/api';
 import { useState, useEffect } from 'react';
 import { FAMILIAS_CANDIDATOS } from '../data/catalogos';
 import { obtenerOfertasPublicas, enviarPostulacionPublica } from '../services/api';
@@ -91,7 +92,7 @@ export default function PortalEmpleos() {
       });
 
       // Enviar correo de confirmación con Resend
-      await fetch('http://localhost:3001/api/enviar-confirmacion', {
+      await fetch(`${API_URL}/api/enviar-confirmacion`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

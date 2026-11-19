@@ -1,3 +1,4 @@
+import { API_URL } from '../services/api';
 import { useState } from 'react';
 import { FAMILIAS_CANDIDATOS, UBICACIONES, UNIDADES } from '../data/catalogos';
 
@@ -51,7 +52,7 @@ export default function RegistroCandidato({ onCancelar, onAgregar }) {
         payload.append('cv', archivoCV);
       }
 
-      const resPostulacion = await fetch('http://localhost:3001/api/postulaciones', {
+      const resPostulacion = await fetch(`${API_URL}/api/postulaciones`, {
         method: 'POST',
         body: payload
       });
@@ -62,7 +63,7 @@ export default function RegistroCandidato({ onCancelar, onAgregar }) {
       }
 
       // 2. Enviar correo de confirmación con Resend
-      await fetch('http://localhost:3001/api/enviar-confirmacion', {
+      await fetch(`${API_URL}/api/enviar-confirmacion`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
