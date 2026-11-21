@@ -457,6 +457,29 @@ Responde ÚNICAMENTE con un JSON válido:
   "preguntasSugeridas": ["...", "...", "..."]
 }`;
 
+    // 1. Obtener automáticamente un modelo activo disponible en tu cuenta de Groq
+    let modeloActivo = 'llama-3.1-8b-instant';
+    const modelsRes = await fetch('https://api.groq.com/openai/v1/models', {
+      headers: { Authorization: `Bearer ${groqApiKey}` },
+    });
+
+    if (modelsRes.ok) {
+      const modelsData = await modelsRes.json();
+      const lista = (modelsData.data || []).map((m) => m.id);
+      const preferido =
+        lista.find((id) => id.includes('llama-3.3-70b')) ||
+        lista.find((id) => id.includes('llama-3.1-8b')) ||
+        lista.find((id) => id.includes('llama')) ||
+        lista[0];
+      if (preferido) modeloActivo = preferido;
+    } else {
+      const errModelos = await modelsRes.text();
+      return res.status(502).json({
+        error: 'Error Groq Models (' + modelsRes.status + '): ' + errModelos,
+      });
+    }
+
+    // 2. Ejecutar el análisis psicolaboral con el modelo activo detectado
     const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -464,7 +487,7 @@ Responde ÚNICAMENTE con un JSON válido:
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'llama-3.1-8b-instant',
+        model: modeloActivo,
         messages: [
           {
             role: 'system',
@@ -483,7 +506,7 @@ Responde ÚNICAMENTE con un JSON válido:
       const errDetalle = await groqRes.text();
       console.error('Error Groq API:', groqRes.status, errDetalle);
       return res.status(502).json({
-        error: `Error Groq (${groqRes.status}): ${errDetalle}`,
+        error: 'Error Groq (' + groqRes.status + ') con modelo ' + modeloActivo + ': ' + errDetalle,
       });
     }
 
