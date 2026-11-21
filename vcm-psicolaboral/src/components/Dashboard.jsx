@@ -162,7 +162,7 @@ export default function Dashboard({ solicitudes = [], candidatos = [] }) {
                   >
                     <div>
                       <div className="fw-medium text-dark small">
-                        {s.id} <span className="fw-normal text-muted">· {s.area}</span>
+                        {s.codigo || s.id} <span className="fw-normal text-muted">· {s.area}</span>
                       </div>
                       <div className="text-muted" style={{ fontSize: '0.75rem' }}>
                         Psic. {s.evaluador} · {s.cargo}

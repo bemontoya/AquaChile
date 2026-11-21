@@ -49,7 +49,7 @@ function TarjetaSolicitud({ solicitud, style = {} }) {
           <span className="fw-semibold small text-truncate" title={solicitud.candidato}>
             {solicitud.candidato}
           </span>
-          <span className="badge bg-light text-dark border ms-1">{solicitud.id}</span>
+          <span className="badge bg-light text-dark border ms-1">{solicitud.codigo || solicitud.id}</span>
         </div>
         <div className="small text-muted">{solicitud.cargo}</div>
         <div className="small text-muted">{solicitud.evaluador}</div>

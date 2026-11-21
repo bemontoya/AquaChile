@@ -154,7 +154,8 @@ export async function cargarDatosDesdeBD() {
     const estadoRaw = p.evaluacion?.estado || 'PENDIENTE';
 
     return {
-      id: `SOL-2026-${String(p.id).padStart(3, '0')}`,
+      id: `SOL-BD-${String(p.id).padStart(3, '0')}`,
+      codigo: `SOL-2026-${String(17+p.id).padStart(3,'0')}`,
       postulacionId: p.id,
       evaluacionId: p.evaluacion?.id,
       candidato: p.postulante.nombre,

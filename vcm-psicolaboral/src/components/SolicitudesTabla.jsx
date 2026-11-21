@@ -66,7 +66,7 @@ export default function SolicitudesTabla({ solicitudes }) {
               // Se recorre el arreglo de solicitudes y genera una fila <tr> por cada una
               solicitudes.map((item) => (
                 <tr key={item.id}>
-                  <td className="fw-bold px-3">{item.id}</td>
+                  <td className="fw-bold px-3">{item.codigo || item.id}</td>
                   
                   {/* Nombre y datos de contacto */}
                   <td>
