@@ -1,19 +1,20 @@
 ﻿import 'dotenv/config';
 import fs from 'fs';
 import path from 'path';
+import { createRequire } from 'module';
 import express from 'express';
 import cors from 'cors';
 import { Resend } from 'resend';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
-const pdfParse = require('pdf-parse');
 import mammoth from 'mammoth';
 import { verificarToken, permitirRoles } from './middlewares/auth.js';
 import { configurarSwagger } from './swagger.js';
 import { uploadCV } from './middlewares/uploadCV.js';
+
+const require = createRequire(import.meta.url);
+const pdfParse = require('pdf-parse');
 
 const app = express();
 const prisma = new PrismaClient();
@@ -26,34 +27,30 @@ app.use(express.json());
 configurarSwagger(app);
 
 // ==========================================
+// UTILIDAD: EXTRACCIÓN DE TEXTO DE CV (PDF / DOCX)
+// ==========================================
+async function extraerTextoDesdeBuffer(buffer, nombreArchivo) {
+  try {
+    const ext = path.extname(nombreArchivo || '').toLowerCase();
+    if (ext === '.pdf') {
+      const data = await pdfParse(buffer);
+      return (data.text || '').replace(/\s+/g, ' ').trim().slice(0, 8000);
+    }
+    if (ext === '.docx') {
+      const result = await mammoth.extractRawText({ buffer });
+      return (result.value || '').replace(/\s+/g, ' ').trim().slice(0, 8000);
+    }
+    return '';
+  } catch (err) {
+    console.error('Error extrayendo texto del CV:', err.message);
+    return '';
+  }
+}
+
+// ==========================================
 // 1. AUTENTICACIÓN (JWT)
 // ==========================================
 
-/**
-- @swagger
-- /api/auth/login:
--   post:
--     summary: Iniciar sesión interna (Analista o Evaluador)
--     tags: [Autenticación]
--     requestBody:
--       required: true
--       content:
--         application/json:
--           schema:
--             type: object
--             properties:
--               email:
--                 type: string
--                 example: analista@aquachile.cl
--               password:
--                 type: string
--                 example: AquaChile2026!
--     responses:
--       200:
--         description: Login exitoso con token JWT
--       401:
--         description: Credenciales inválidas
- */
 app.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -86,16 +83,6 @@ app.post('/api/auth/login', async (req, res) => {
 // 2. GESTIÓN DE OFERTAS LABORALES (CRUD)
 // ==========================================
 
-/**
-- @swagger
-- /api/ofertas/publicas:
--   get:
--     summary: Obtener ofertas publicadas (Portal Público sin login)
--     tags: [Ofertas]
--     responses:
--       200:
--         description: Lista de ofertas activas
- */
 app.get('/api/ofertas/publicas', async (req, res) => {
   const { familiaCargo, busqueda } = req.query;
   try {
@@ -118,18 +105,6 @@ app.get('/api/ofertas/publicas', async (req, res) => {
   }
 });
 
-/**
-- @swagger
-- /api/ofertas:
--   get:
--     summary: Listar todas las ofertas (Panel Admin protegido)
--     tags: [Ofertas]
--     security:
--       - bearerAuth: []
--     responses:
--       200:
--         description: Todas las ofertas registradas
- */
 app.get('/api/ofertas', verificarToken, async (req, res) => {
   try {
     const ofertas = await prisma.oferta.findMany({
@@ -142,18 +117,6 @@ app.get('/api/ofertas', verificarToken, async (req, res) => {
   }
 });
 
-/**
-- @swagger
-- /api/ofertas:
--   post:
--     summary: Crear nueva oferta laboral (Solo Analista)
--     tags: [Ofertas]
--     security:
--       - bearerAuth: []
--     responses:
--       201:
--         description: Oferta creada exitosamente
- */
 app.post('/api/ofertas', verificarToken, permitirRoles('ANALISTA'), async (req, res) => {
   try {
     const nuevaOferta = await prisma.oferta.create({
@@ -169,24 +132,6 @@ app.post('/api/ofertas', verificarToken, permitirRoles('ANALISTA'), async (req, 
   }
 });
 
-/**
-- @swagger
-- /api/ofertas/{id}:
--   put:
--     summary: Editar una oferta laboral existente (Solo Analista)
--     tags: [Ofertas]
--     security:
--       - bearerAuth: []
--     parameters:
--       - in: path
--         name: id
--         required: true
--         schema:
--           type: integer
--     responses:
--       200:
--         description: Oferta actualizada
- */
 app.put('/api/ofertas/:id', verificarToken, permitirRoles('ANALISTA'), async (req, res) => {
   const { id } = req.params;
   try {
@@ -203,24 +148,6 @@ app.put('/api/ofertas/:id', verificarToken, permitirRoles('ANALISTA'), async (re
   }
 });
 
-/**
-- @swagger
-- /api/ofertas/{id}/publicar:
--   patch:
--     summary: Publicar o despublicar una oferta laboral (Solo Analista)
--     tags: [Ofertas]
--     security:
--       - bearerAuth: []
--     parameters:
--       - in: path
--         name: id
--         required: true
--         schema:
--           type: integer
--     responses:
--       200:
--         description: Estado de publicación actualizado
- */
 app.patch('/api/ofertas/:id/publicar', verificarToken, permitirRoles('ANALISTA'), async (req, res) => {
   const { id } = req.params;
   const { publicada } = req.body;
@@ -236,25 +163,24 @@ app.patch('/api/ofertas/:id/publicar', verificarToken, permitirRoles('ANALISTA')
 });
 
 // ==========================================
-// 3. POSTULACIONES, CV PRIVADO Y EVALUACIONES
+// 3. POSTULACIONES, CV PERSISTENTE Y EVALUACIONES
 // ==========================================
 
-/**
-- @swagger
-- /api/postulaciones:
--   get:
--     summary: Listar todas las postulaciones y sus evaluaciones (Panel Interno)
--     tags: [Postulaciones]
--     security:
--       - bearerAuth: []
--     responses:
--       200:
--         description: Listado completo para tabla y Kanban
- */
 app.get('/api/postulaciones', verificarToken, async (req, res) => {
   try {
     const postulaciones = await prisma.postulacion.findMany({
-      include: {
+      select: {
+        id: true,
+        postulanteId: true,
+        ofertaId: true,
+        carpetaNombre: true,
+        cvRutaArchivo: true,
+        cvNombreOriginal: true,
+        resumenIA: true,
+        puntajeIA: true,
+        preguntasIA: true,
+        estado: true,
+        fechaPostulacion: true,
         postulante: true,
         oferta: true,
         evaluacion: {
@@ -269,55 +195,35 @@ app.get('/api/postulaciones', verificarToken, async (req, res) => {
   }
 });
 
-/**
-- @swagger
-- /api/postulaciones/{id}/cv:
--   get:
--     summary: Descargar CV privado del postulante (Solo usuarios autenticados)
--     tags: [Postulaciones]
--     security:
--       - bearerAuth: []
--     parameters:
--       - in: path
--         name: id
--         required: true
--         schema:
--           type: integer
--     responses:
--       200:
--         description: Descarga del archivo CV
- */
 app.get('/api/postulaciones/:id/cv', verificarToken, async (req, res) => {
   try {
     const postulacion = await prisma.postulacion.findUnique({
       where: { id: Number(req.params.id) },
     });
 
-    if (!postulacion || !postulacion.cvRutaArchivo) {
-      return res.status(404).json({ error: 'No se encontró registro del CV en la base de datos.' });
+    if (!postulacion) {
+      return res.status(404).json({ error: 'No se encontró la postulación en la base de datos.' });
     }
 
-    const rutaAbsoluta = path.resolve(postulacion.cvRutaArchivo);
-    if (!fs.existsSync(rutaAbsoluta)) {
-      return res.status(404).json({ error: 'El archivo CV no existe en el almacenamiento privado del servidor.' });
+    const nombreDescarga = postulacion.cvNombreOriginal || 'CV_Postulante.pdf';
+
+    if (postulacion.cvRutaArchivo && fs.existsSync(path.resolve(postulacion.cvRutaArchivo))) {
+      return res.download(path.resolve(postulacion.cvRutaArchivo), nombreDescarga);
     }
 
-    res.download(rutaAbsoluta, postulacion.cvNombreOriginal || 'CV_Postulante.pdf');
+    if (postulacion.cvContenidoBase64) {
+      const buffer = Buffer.from(postulacion.cvContenidoBase64, 'base64');
+      res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(nombreDescarga)}"`);
+      res.setHeader('Content-Type', 'application/octet-stream');
+      return res.send(buffer);
+    }
+
+    return res.status(404).json({ error: 'El archivo CV no está disponible en el servidor.' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-/**
-- @swagger
-- /api/postulaciones:
--   post:
--     summary: Enviar postulación pública con CV adjunto (PDF/DOCX)
--     tags: [Postulaciones]
--     responses:
--       201:
--         description: Postulación registrada y CV almacenado en carpeta privada
- */
 app.post('/api/postulaciones', uploadCV.single('cv'), async (req, res) => {
   const { ofertaId, nombre, rut, email, telefono, cargo, familiaCargo, ubicacion, unidad } = req.body;
 
@@ -357,6 +263,10 @@ app.post('/api/postulaciones', uploadCV.single('cv'), async (req, res) => {
       create: { nombre, rut, email, telefono },
     });
 
+    const fileBuffer = fs.readFileSync(req.file.path);
+    const textoCV = await extraerTextoDesdeBuffer(fileBuffer, req.file.originalname);
+    const base64CV = fileBuffer.toString('base64');
+
     const postulacion = await prisma.postulacion.create({
       data: {
         postulanteId: postulante.id,
@@ -364,6 +274,8 @@ app.post('/api/postulaciones', uploadCV.single('cv'), async (req, res) => {
         carpetaNombre: req.carpetaPostulante,
         cvRutaArchivo: req.file.path,
         cvNombreOriginal: req.file.originalname,
+        cvTextoExtraido: textoCV || null,
+        cvContenidoBase64: base64CV,
       },
       include: { oferta: true },
     });
@@ -384,7 +296,14 @@ app.post('/api/postulaciones', uploadCV.single('cv'), async (req, res) => {
 
     res.status(201).json({
       mensaje: 'Postulación registrada correctamente',
-      postulacion,
+      postulacion: {
+        id: postulacion.id,
+        postulanteId: postulacion.postulanteId,
+        ofertaId: postulacion.ofertaId,
+        carpetaNombre: postulacion.carpetaNombre,
+        cvNombreOriginal: postulacion.cvNombreOriginal,
+        oferta: postulacion.oferta,
+      },
     });
   } catch (error) {
     if (error.code === 'P2002') {
@@ -394,24 +313,6 @@ app.post('/api/postulaciones', uploadCV.single('cv'), async (req, res) => {
   }
 });
 
-/**
-- @swagger
-- /api/evaluaciones/{id}:
--   patch:
--     summary: Actualizar estado, fechas, observaciones o Meet de evaluación psicolaboral
--     tags: [Evaluaciones]
--     security:
--       - bearerAuth: []
--     parameters:
--       - in: path
--         name: id
--         required: true
--         schema:
--           type: integer
--     responses:
--       200:
--         description: Evaluación actualizada
- */
 app.patch('/api/evaluaciones/:id', verificarToken, async (req, res) => {
   const { estado, fechaEvaluacion, observaciones, responsableId, googleEventId, meetLink } = req.body;
   try {
@@ -440,16 +341,6 @@ app.patch('/api/evaluaciones/:id', verificarToken, async (req, res) => {
 // 4. NOTIFICACIONES POR CORREO (RESEND)
 // ==========================================
 
-/**
-- @swagger
-- /api/enviar-confirmacion:
--   post:
--     summary: Enviar correo electrónico de confirmación de postulación
--     tags: [Notificaciones]
--     responses:
--       200:
--         description: Correo enviado correctamente
- */
 app.post('/api/enviar-confirmacion', async (req, res) => {
   const { nombre, email, cargo } = req.body;
 
@@ -475,45 +366,9 @@ app.post('/api/enviar-confirmacion', async (req, res) => {
 });
 
 // ==========================================
-// 5. ASISTENTE DE INTELIGENCIA ARTIFICIAL (GROQ + LECTURA REAL DE CV Y OFERTA)
+// 5. ASISTENTE DE INTELIGENCIA ARTIFICIAL (GROQ + CV REAL + OFERTA REAL)
 // ==========================================
 
-async function extraerTextoCV(rutaArchivo) {
-  if (!rutaArchivo) return '';
-  try {
-    const rutaAbsoluta = path.resolve(rutaArchivo);
-    if (!fs.existsSync(rutaAbsoluta)) return '';
-
-    const ext = path.extname(rutaAbsoluta).toLowerCase();
-    const buffer = fs.readFileSync(rutaAbsoluta);
-
-    if (ext === '.pdf') {
-      const data = await pdfParse(buffer);
-      return (data.text || '').replace(/\s+/g, ' ').trim().slice(0, 6000);
-    }
-    if (ext === '.docx') {
-      const result = await mammoth.extractRawText({ buffer });
-      return (result.value || '').replace(/\s+/g, ' ').trim().slice(0, 6000);
-    }
-    return '';
-  } catch (err) {
-    console.error('No se pudo leer el CV para IA:', err.message);
-    return '';
-  }
-}
-
-/**
-- @swagger
-- /api/ia/analizar-candidato:
--   post:
--     summary: Generar análisis preliminar y guía de entrevista psicolaboral con IA (CV + Oferta real)
--     tags: [Inteligencia Artificial]
--     security:
--       - bearerAuth: []
--     responses:
--       200:
--         description: Análisis y preguntas sugeridas generadas
- */
 app.post('/api/ia/analizar-candidato', verificarToken, async (req, res) => {
   const { postulacionId, cargo, familiaCargo, observacionesPrevias } = req.body;
 
@@ -522,7 +377,6 @@ app.post('/api/ia/analizar-candidato', verificarToken, async (req, res) => {
   }
 
   try {
-    // 1. Obtener contexto real completo desde la base de datos (Oferta + Evaluación + Ruta CV)
     let postulacionDB = null;
     if (postulacionId) {
       postulacionDB = await prisma.postulacion.findUnique({
@@ -545,8 +399,17 @@ app.post('/api/ia/analizar-candidato', verificarToken, async (req, res) => {
       postulacionDB?.evaluacion?.observaciones ||
       '';
 
-    // 2. Extraer texto real del CV (anonimizando datos de contacto básicos antes de enviar a Groq)
-    let textoCV = await extraerTextoCV(postulacionDB?.cvRutaArchivo);
+    // Prioriza texto persistido en Neon; si no existe, intenta extraer desde disco o Base64
+    let textoCV = postulacionDB?.cvTextoExtraido || '';
+    if (!textoCV && postulacionDB?.cvRutaArchivo && fs.existsSync(path.resolve(postulacionDB.cvRutaArchivo))) {
+      const diskBuffer = fs.readFileSync(path.resolve(postulacionDB.cvRutaArchivo));
+      textoCV = await extraerTextoDesdeBuffer(diskBuffer, postulacionDB.cvNombreOriginal);
+    } else if (!textoCV && postulacionDB?.cvContenidoBase64) {
+      const dbBuffer = Buffer.from(postulacionDB.cvContenidoBase64, 'base64');
+      textoCV = await extraerTextoDesdeBuffer(dbBuffer, postulacionDB.cvNombreOriginal);
+    }
+
+    // Anonimización PII antes de enviar a Groq
     if (textoCV) {
       textoCV = textoCV
         .replace(/\b\d{1,2}\.?\d{3}\.?\d{3}-[\dkK]\b/g, '[RUT_ANONIMIZADO]')
@@ -556,7 +419,7 @@ app.post('/api/ia/analizar-candidato', verificarToken, async (req, res) => {
 
     const groqApiKey = (process.env.GROQ_API_KEY || '').trim();
     if (!groqApiKey) {
-      return res.status(500).json({ error: 'GROQ_API_KEY no configurada en el servidor.' });
+      return res.status(500).json({ error: 'GROQ_API_KEY no configurada en Render.' });
     }
 
     const promptReal = `Eres un Psicólogo Laboral Senior de AquaChile (industria salmonicultora/acuícola en el sur de Chile).
@@ -570,7 +433,11 @@ Analiza de forma objetiva, rigurosa y consistente la adecuación de un candidato
 - Requisitos del perfil: ${requisitosOferta}
 
 === ANTECEDENTES DEL CANDIDATO (ANONIMIZADOS) ===
-- Contenido extraído del CV: ${textoCV ? textoCV : 'ATENCIÓN: No se encontró texto legible en el CV adjunto (puede ser un archivo de prueba vacío o escaneado sin OCR). Evalúa con cautela indicando esta limitación.'}
+- Contenido extraído del CV: ${
+      textoCV
+        ? textoCV
+        : 'ATENCIÓN: No se encontró texto legible en el CV adjunto (puede ser un archivo escaneado sin OCR o postulación sin texto). Evalúa con cautela indicando esta limitación.'
+    }
 - Observaciones clínicas/entrevista previas del evaluador: ${obsReales ? obsReales : 'Sin observaciones registradas aún.'}
 
 === REGLAS ESTRICTAS DE EVALUACIÓN ===
@@ -614,9 +481,9 @@ Responde ÚNICAMENTE con un JSON válido:
 
     if (!groqRes.ok) {
       const errDetalle = await groqRes.text();
-      console.error('Error respuesta Groq:', groqRes.status, errDetalle);
+      console.error('Error Groq API:', groqRes.status, errDetalle);
       return res.status(502).json({
-        error: `Error al consultar el motor IA (${groqRes.status}). Verifica que GROQ_API_KEY sea válida en Render.`,
+        error: `Error al consultar Groq (${groqRes.status}). Verifica que GROQ_API_KEY sea válida en Render.`,
       });
     }
 
@@ -636,6 +503,7 @@ Responde ÚNICAMENTE con un JSON válido:
         data: {
           puntajeIA: resultado.puntajeOrientativo,
           resumenIA: resultado.resumen,
+          preguntasIA: resultado.preguntasSugeridas.join('\n'),
         },
       });
     }

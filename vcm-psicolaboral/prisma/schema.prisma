@@ -71,26 +71,28 @@ model Postulante {
 
 // 4. Postulaciones (Vincula Postulante + Oferta + Carpeta/CV + Resumen IA)
 model Postulacion {
-  id             Int                  @id @default(autoincrement())
-  postulanteId   Int
-  postulante     Postulante           @relation(fields: [postulanteId], references: [id], onDelete: Cascade)
-  ofertaId       Int
-  oferta         Oferta               @relation(fields: [ofertaId], references: [id], onDelete: Cascade)
+  id                Int                  @id @default(autoincrement())
+  postulanteId      Int
+  postulante        Postulante           @relation(fields: [postulanteId], references: [id], onDelete: Cascade)
+  ofertaId          Int
+  oferta            Oferta               @relation(fields: [ofertaId], references: [id], onDelete: Cascade)
   
   // Almacenamiento persistente del CV (Punto 7 de la pauta)
-  carpetaNombre  String               // Ej: "juan_perez_17317890"
-  cvRutaArchivo  String               // Ruta en Storage o servidor privado
-  cvNombreOriginal String
+  carpetaNombre     String               // Ej: "juan_perez_17317890"
+  cvRutaArchivo     String               // Ruta en Storage o servidor privado
+  cvNombreOriginal  String
+  cvTextoExtraido   String?              @db.Text
+  cvContenidoBase64 String?              @db.Text
   
   // Apoyo de Inteligencia Artificial (Punto 9 de la pauta)
-  resumenIA      String?              @db.Text
-  puntajeIA      Int?                 // Puntuación orientativa 0-100
-  preguntasIA    String?              @db.Text
+  resumenIA         String?              @db.Text
+  puntajeIA         Int?                 // Puntuación orientativa 0-100
+  preguntasIA       String?              @db.Text
   
-  estado         EstadoPostulacion    @default(RECIBIDA)
-  fechaPostulacion DateTime           @default(now())
+  estado            EstadoPostulacion    @default(RECIBIDA)
+  fechaPostulacion  DateTime             @default(now())
 
-  evaluacion     SolicitudEvaluacion?
+  evaluacion        SolicitudEvaluacion?
 
   @@unique([postulanteId, ofertaId]) // Evita duplicar postulación a la misma oferta
 }
