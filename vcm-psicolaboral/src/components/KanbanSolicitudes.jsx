@@ -17,6 +17,29 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { ESTADOS } from '../data/catalogos'
 
+// Tarjeta puramente visual: NO usa useSortable.
+// Se reutiliza en la tarjeta arrastrable y en el DragOverlay.
+function TarjetaVisual({ solicitud }) {
+  return (
+    <div className="card mb-2 border-0 shadow-sm">
+      <div className="card-body p-2">
+        <div className="d-flex justify-content-between align-items-start mb-1">
+          <span className="fw-semibold small text-truncate" title={solicitud.candidato}>
+            {solicitud.candidato}
+          </span>
+          <span className="badge bg-light text-dark border ms-1">{solicitud.codigo || solicitud.id}</span>
+        </div>
+        <div className="small text-muted">{solicitud.cargo}</div>
+        <div className="small text-muted">{solicitud.evaluador}</div>
+        <div className="d-flex justify-content-between align-items-center mt-1">
+          <span className="small text-muted">{solicitud.fecha}</span>
+          <span className="badge bg-primary bg-opacity-10 text-primary">{solicitud.area}</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // Tarjeta individual arrastrable
 function TarjetaSolicitud({ solicitud, style = {} }) {
   const {
@@ -37,27 +60,8 @@ function TarjetaSolicitud({ solicitud, style = {} }) {
   }
 
   return (
-    <div
-      ref={setNodeRef}
-      style={cardStyle}
-      {...attributes}
-      {...listeners}
-      className="card mb-2 border-0 shadow-sm"
-    >
-      <div className="card-body p-2">
-        <div className="d-flex justify-content-between align-items-start mb-1">
-          <span className="fw-semibold small text-truncate" title={solicitud.candidato}>
-            {solicitud.candidato}
-          </span>
-          <span className="badge bg-light text-dark border ms-1">{solicitud.codigo || solicitud.id}</span>
-        </div>
-        <div className="small text-muted">{solicitud.cargo}</div>
-        <div className="small text-muted">{solicitud.evaluador}</div>
-        <div className="d-flex justify-content-between align-items-center mt-1">
-          <span className="small text-muted">{solicitud.fecha}</span>
-          <span className="badge bg-primary bg-opacity-10 text-primary">{solicitud.area}</span>
-        </div>
-      </div>
+    <div ref={setNodeRef} style={cardStyle} {...attributes} {...listeners}>
+      <TarjetaVisual solicitud={solicitud} />
     </div>
   )
 }
@@ -181,8 +185,8 @@ export default function KanbanSolicitudes({ solicitudes, setSolicitudes }) {
 
       <DragOverlay dropAnimation={dropAnimation}>
         {activeSolicitud ? (
-          <div style={{ transform: 'rotate(3deg)', cursor: 'grabbing' }}>
-            <TarjetaSolicitud solicitud={activeSolicitud} />
+          <div style={{ transform: 'rotate(3deg)', cursor: 'grabbing', filter: 'drop-shadow(0 10px 18px rgba(0,0,0,0.25))' }}>
+            <TarjetaVisual solicitud={activeSolicitud} />
           </div>
         ) : null}
       </DragOverlay>
