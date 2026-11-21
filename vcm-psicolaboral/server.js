@@ -18,6 +18,16 @@ const pdfParse = require('pdf-parse');
 
 const app = express();
 const prisma = new PrismaClient();
+// Asegurar columnas persistentes de CV en PostgreSQL al iniciar
+prisma.$executeRawUnsafe(`
+  ALTER TABLE "Postulacion"
+  ADD COLUMN IF NOT EXISTS "cvTextoExtraido" TEXT,
+  ADD COLUMN IF NOT EXISTS "cvContenidoBase64" TEXT;
+`).then(() => {
+  console.log('Columnas cvTextoExtraido y cvContenidoBase64 verificadas en BD');
+}).catch((err) => {
+  console.error('Error verificando columnas en BD:', err.message);
+});
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 app.use(cors());
