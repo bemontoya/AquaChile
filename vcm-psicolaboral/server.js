@@ -457,25 +457,42 @@ Responde ÚNICAMENTE con un JSON válido:
   "preguntasSugeridas": ["...", "...", "..."]
 }`;
 
-    // 1. Obtener automáticamente un modelo activo disponible en tu cuenta de Groq
-    let modeloActivo = 'llama-3.1-8b-instant';
+    // 1. Obtener automáticamente un modelo de chat vigente en tu cuenta de Groq
     const modelsRes = await fetch('https://api.groq.com/openai/v1/models', {
       headers: { Authorization: `Bearer ${groqApiKey}` },
     });
 
-    if (modelsRes.ok) {
-      const modelsData = await modelsRes.json();
-      const lista = (modelsData.data || []).map((m) => m.id);
-      const preferido =
-        lista.find((id) => id.includes('llama-3.3-70b')) ||
-        lista.find((id) => id.includes('llama-3.1-8b')) ||
-        lista.find((id) => id.includes('llama')) ||
-        lista[0];
-      if (preferido) modeloActivo = preferido;
-    } else {
+    if (!modelsRes.ok) {
       const errModelos = await modelsRes.text();
       return res.status(502).json({
         error: 'Error Groq Models (' + modelsRes.status + '): ' + errModelos,
+      });
+    }
+
+    const modelsData = await modelsRes.json();
+    const modelosChat = (modelsData.data || [])
+      .map((m) => m.id)
+      .filter(
+        (id) =>
+          !id.includes('whisper') &&
+          !id.includes('guard') &&
+          !id.includes('tts') &&
+          !id.includes('embed') &&
+          !id.includes('vision') &&
+          !id.includes('orpheus') &&
+          !id.includes('playai')
+      );
+
+    const modeloActivo =
+      modelosChat.find((id) => id.includes('70b')) ||
+      modelosChat.find((id) => id.includes('gpt-oss')) ||
+      modelosChat.find((id) => id.includes('qwen')) ||
+      modelosChat.find((id) => id.includes('llama')) ||
+      modelosChat[0];
+
+    if (!modeloActivo) {
+      return res.status(502).json({
+        error: 'No hay modelos de chat disponibles en Groq: ' + JSON.stringify((modelsData.data || []).map((m) => m.id)),
       });
     }
 
