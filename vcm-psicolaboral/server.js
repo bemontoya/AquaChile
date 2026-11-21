@@ -457,7 +457,7 @@ Responde ÚNICAMENTE con un JSON válido:
   "preguntasSugeridas": ["...", "...", "..."]
 }`;
 
-    // 1. Obtener automáticamente un modelo de chat vigente en tu cuenta de Groq
+    // 1. Obtener automáticamente un LLM generativo vigente en tu cuenta de Groq
     const modelsRes = await fetch('https://api.groq.com/openai/v1/models', {
       headers: { Authorization: `Bearer ${groqApiKey}` },
     });
@@ -472,27 +472,32 @@ Responde ÚNICAMENTE con un JSON válido:
     const modelsData = await modelsRes.json();
     const modelosChat = (modelsData.data || [])
       .map((m) => m.id)
-      .filter(
-        (id) =>
-          !id.includes('whisper') &&
-          !id.includes('guard') &&
-          !id.includes('tts') &&
-          !id.includes('embed') &&
-          !id.includes('vision') &&
-          !id.includes('orpheus') &&
-          !id.includes('playai')
-      );
+      .filter((id) => {
+        const lower = id.toLowerCase();
+        return (
+          !lower.includes('whisper') &&
+          !lower.includes('guard') &&
+          !lower.includes('safeguard') &&
+          !lower.includes('tts') &&
+          !lower.includes('embed') &&
+          !lower.includes('orpheus') &&
+          !lower.includes('playai') &&
+          !lower.includes('compound')
+        );
+      });
 
     const modeloActivo =
-      modelosChat.find((id) => id.includes('70b')) ||
-      modelosChat.find((id) => id.includes('gpt-oss')) ||
-      modelosChat.find((id) => id.includes('qwen')) ||
-      modelosChat.find((id) => id.includes('llama')) ||
+      modelosChat.find((id) => id.toLowerCase().includes('llama-4')) ||
+      modelosChat.find((id) => id.toLowerCase().includes('gpt-oss-120b')) ||
+      modelosChat.find((id) => id.toLowerCase().includes('gpt-oss')) ||
+      modelosChat.find((id) => id.toLowerCase().includes('qwen')) ||
+      modelosChat.find((id) => id.toLowerCase().includes('70b')) ||
+      modelosChat.find((id) => id.toLowerCase().includes('8b')) ||
       modelosChat[0];
 
     if (!modeloActivo) {
       return res.status(502).json({
-        error: 'No hay modelos de chat disponibles en Groq: ' + JSON.stringify((modelsData.data || []).map((m) => m.id)),
+        error: 'No hay modelos generativos disponibles en Groq: ' + JSON.stringify((modelsData.data || []).map((m) => m.id)),
       });
     }
 
