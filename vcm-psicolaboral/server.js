@@ -7,6 +7,8 @@ import { Resend } from 'resend';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
+import pdfParse from 'pdf-parse/lib/pdf-parse.js';
+import mammoth from 'mammoth';
 import { verificarToken, permitirRoles } from './middlewares/auth.js';
 import { configurarSwagger } from './swagger.js';
 import { uploadCV } from './middlewares/uploadCV.js';
@@ -26,29 +28,29 @@ configurarSwagger(app);
 // ==========================================
 
 /**
- * @swagger
- * /api/auth/login:
- *   post:
- *     summary: Iniciar sesión interna (Analista o Evaluador)
- *     tags: [Autenticación]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               email:
- *                 type: string
- *                 example: analista@aquachile.cl
- *               password:
- *                 type: string
- *                 example: AquaChile2026!
- *     responses:
- *       200:
- *         description: Login exitoso con token JWT
- *       401:
- *         description: Credenciales inválidas
+- @swagger
+- /api/auth/login:
+-   post:
+-     summary: Iniciar sesión interna (Analista o Evaluador)
+-     tags: [Autenticación]
+-     requestBody:
+-       required: true
+-       content:
+-         application/json:
+-           schema:
+-             type: object
+-             properties:
+-               email:
+-                 type: string
+-                 example: analista@aquachile.cl
+-               password:
+-                 type: string
+-                 example: AquaChile2026!
+-     responses:
+-       200:
+-         description: Login exitoso con token JWT
+-       401:
+-         description: Credenciales inválidas
  */
 app.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body;
@@ -83,14 +85,14 @@ app.post('/api/auth/login', async (req, res) => {
 // ==========================================
 
 /**
- * @swagger
- * /api/ofertas/publicas:
- *   get:
- *     summary: Obtener ofertas publicadas (Portal Público sin login)
- *     tags: [Ofertas]
- *     responses:
- *       200:
- *         description: Lista de ofertas activas
+- @swagger
+- /api/ofertas/publicas:
+-   get:
+-     summary: Obtener ofertas publicadas (Portal Público sin login)
+-     tags: [Ofertas]
+-     responses:
+-       200:
+-         description: Lista de ofertas activas
  */
 app.get('/api/ofertas/publicas', async (req, res) => {
   const { familiaCargo, busqueda } = req.query;
@@ -115,16 +117,16 @@ app.get('/api/ofertas/publicas', async (req, res) => {
 });
 
 /**
- * @swagger
- * /api/ofertas:
- *   get:
- *     summary: Listar todas las ofertas (Panel Admin protegido)
- *     tags: [Ofertas]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Todas las ofertas registradas
+- @swagger
+- /api/ofertas:
+-   get:
+-     summary: Listar todas las ofertas (Panel Admin protegido)
+-     tags: [Ofertas]
+-     security:
+-       - bearerAuth: []
+-     responses:
+-       200:
+-         description: Todas las ofertas registradas
  */
 app.get('/api/ofertas', verificarToken, async (req, res) => {
   try {
@@ -139,16 +141,16 @@ app.get('/api/ofertas', verificarToken, async (req, res) => {
 });
 
 /**
- * @swagger
- * /api/ofertas:
- *   post:
- *     summary: Crear nueva oferta laboral (Solo Analista)
- *     tags: [Ofertas]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       201:
- *         description: Oferta creada exitosamente
+- @swagger
+- /api/ofertas:
+-   post:
+-     summary: Crear nueva oferta laboral (Solo Analista)
+-     tags: [Ofertas]
+-     security:
+-       - bearerAuth: []
+-     responses:
+-       201:
+-         description: Oferta creada exitosamente
  */
 app.post('/api/ofertas', verificarToken, permitirRoles('ANALISTA'), async (req, res) => {
   try {
@@ -166,22 +168,22 @@ app.post('/api/ofertas', verificarToken, permitirRoles('ANALISTA'), async (req, 
 });
 
 /**
- * @swagger
- * /api/ofertas/{id}:
- *   put:
- *     summary: Editar una oferta laboral existente (Solo Analista)
- *     tags: [Ofertas]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *     responses:
- *       200:
- *         description: Oferta actualizada
+- @swagger
+- /api/ofertas/{id}:
+-   put:
+-     summary: Editar una oferta laboral existente (Solo Analista)
+-     tags: [Ofertas]
+-     security:
+-       - bearerAuth: []
+-     parameters:
+-       - in: path
+-         name: id
+-         required: true
+-         schema:
+-           type: integer
+-     responses:
+-       200:
+-         description: Oferta actualizada
  */
 app.put('/api/ofertas/:id', verificarToken, permitirRoles('ANALISTA'), async (req, res) => {
   const { id } = req.params;
@@ -200,22 +202,22 @@ app.put('/api/ofertas/:id', verificarToken, permitirRoles('ANALISTA'), async (re
 });
 
 /**
- * @swagger
- * /api/ofertas/{id}/publicar:
- *   patch:
- *     summary: Publicar o despublicar una oferta laboral (Solo Analista)
- *     tags: [Ofertas]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *     responses:
- *       200:
- *         description: Estado de publicación actualizado
+- @swagger
+- /api/ofertas/{id}/publicar:
+-   patch:
+-     summary: Publicar o despublicar una oferta laboral (Solo Analista)
+-     tags: [Ofertas]
+-     security:
+-       - bearerAuth: []
+-     parameters:
+-       - in: path
+-         name: id
+-         required: true
+-         schema:
+-           type: integer
+-     responses:
+-       200:
+-         description: Estado de publicación actualizado
  */
 app.patch('/api/ofertas/:id/publicar', verificarToken, permitirRoles('ANALISTA'), async (req, res) => {
   const { id } = req.params;
@@ -236,16 +238,16 @@ app.patch('/api/ofertas/:id/publicar', verificarToken, permitirRoles('ANALISTA')
 // ==========================================
 
 /**
- * @swagger
- * /api/postulaciones:
- *   get:
- *     summary: Listar todas las postulaciones y sus evaluaciones (Panel Interno)
- *     tags: [Postulaciones]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Listado completo para tabla y Kanban
+- @swagger
+- /api/postulaciones:
+-   get:
+-     summary: Listar todas las postulaciones y sus evaluaciones (Panel Interno)
+-     tags: [Postulaciones]
+-     security:
+-       - bearerAuth: []
+-     responses:
+-       200:
+-         description: Listado completo para tabla y Kanban
  */
 app.get('/api/postulaciones', verificarToken, async (req, res) => {
   try {
@@ -266,22 +268,22 @@ app.get('/api/postulaciones', verificarToken, async (req, res) => {
 });
 
 /**
- * @swagger
- * /api/postulaciones/{id}/cv:
- *   get:
- *     summary: Descargar CV privado del postulante (Solo usuarios autenticados)
- *     tags: [Postulaciones]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *     responses:
- *       200:
- *         description: Descarga del archivo CV
+- @swagger
+- /api/postulaciones/{id}/cv:
+-   get:
+-     summary: Descargar CV privado del postulante (Solo usuarios autenticados)
+-     tags: [Postulaciones]
+-     security:
+-       - bearerAuth: []
+-     parameters:
+-       - in: path
+-         name: id
+-         required: true
+-         schema:
+-           type: integer
+-     responses:
+-       200:
+-         description: Descarga del archivo CV
  */
 app.get('/api/postulaciones/:id/cv', verificarToken, async (req, res) => {
   try {
@@ -305,14 +307,14 @@ app.get('/api/postulaciones/:id/cv', verificarToken, async (req, res) => {
 });
 
 /**
- * @swagger
- * /api/postulaciones:
- *   post:
- *     summary: Enviar postulación pública con CV adjunto (PDF/DOCX)
- *     tags: [Postulaciones]
- *     responses:
- *       201:
- *         description: Postulación registrada y CV almacenado en carpeta privada
+- @swagger
+- /api/postulaciones:
+-   post:
+-     summary: Enviar postulación pública con CV adjunto (PDF/DOCX)
+-     tags: [Postulaciones]
+-     responses:
+-       201:
+-         description: Postulación registrada y CV almacenado en carpeta privada
  */
 app.post('/api/postulaciones', uploadCV.single('cv'), async (req, res) => {
   const { ofertaId, nombre, rut, email, telefono, cargo, familiaCargo, ubicacion, unidad } = req.body;
@@ -391,22 +393,22 @@ app.post('/api/postulaciones', uploadCV.single('cv'), async (req, res) => {
 });
 
 /**
- * @swagger
- * /api/evaluaciones/{id}:
- *   patch:
- *     summary: Actualizar estado, fechas, observaciones o Meet de evaluación psicolaboral
- *     tags: [Evaluaciones]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *     responses:
- *       200:
- *         description: Evaluación actualizada
+- @swagger
+- /api/evaluaciones/{id}:
+-   patch:
+-     summary: Actualizar estado, fechas, observaciones o Meet de evaluación psicolaboral
+-     tags: [Evaluaciones]
+-     security:
+-       - bearerAuth: []
+-     parameters:
+-       - in: path
+-         name: id
+-         required: true
+-         schema:
+-           type: integer
+-     responses:
+-       200:
+-         description: Evaluación actualizada
  */
 app.patch('/api/evaluaciones/:id', verificarToken, async (req, res) => {
   const { estado, fechaEvaluacion, observaciones, responsableId, googleEventId, meetLink } = req.body;
@@ -437,14 +439,14 @@ app.patch('/api/evaluaciones/:id', verificarToken, async (req, res) => {
 // ==========================================
 
 /**
- * @swagger
- * /api/enviar-confirmacion:
- *   post:
- *     summary: Enviar correo electrónico de confirmación de postulación
- *     tags: [Notificaciones]
- *     responses:
- *       200:
- *         description: Correo enviado correctamente
+- @swagger
+- /api/enviar-confirmacion:
+-   post:
+-     summary: Enviar correo electrónico de confirmación de postulación
+-     tags: [Notificaciones]
+-     responses:
+-       200:
+-         description: Correo enviado correctamente
  */
 app.post('/api/enviar-confirmacion', async (req, res) => {
   const { nombre, email, cargo } = req.body;
@@ -471,154 +473,162 @@ app.post('/api/enviar-confirmacion', async (req, res) => {
 });
 
 // ==========================================
-// 5. ASISTENTE DE INTELIGENCIA ARTIFICIAL (GROQ + ANONIMIZACIÓN)
+// 5. ASISTENTE DE INTELIGENCIA ARTIFICIAL (GROQ + LECTURA REAL DE CV Y OFERTA)
 // ==========================================
 
-async function obtenerModeloGroqActivo(apiKey) {
+async function extraerTextoCV(rutaArchivo) {
+  if (!rutaArchivo) return '';
   try {
-    const res = await fetch('https://api.groq.com/openai/v1/models', {
-      headers: { Authorization: `Bearer ${apiKey}` },
-    });
-    if (!res.ok) return 'llama-3.1-8b-instant';
-    const data = await res.json();
-    const modelos = (data.data || [])
-      .map((m) => m.id)
-      .filter((id) => !id.includes('whisper') && !id.includes('guard') && !id.includes('tts'));
-    if (modelos.includes('llama-3.1-8b-instant')) return 'llama-3.1-8b-instant';
-    return modelos[0] || 'llama-3.1-8b-instant';
-  } catch {
-    return 'llama-3.1-8b-instant';
+    const rutaAbsoluta = path.resolve(rutaArchivo);
+    if (!fs.existsSync(rutaAbsoluta)) return '';
+
+    const ext = path.extname(rutaAbsoluta).toLowerCase();
+    const buffer = fs.readFileSync(rutaAbsoluta);
+
+    if (ext === '.pdf') {
+      const data = await pdfParse(buffer);
+      return (data.text || '').replace(/\s+/g, ' ').trim().slice(0, 6000);
+    }
+    if (ext === '.docx') {
+      const result = await mammoth.extractRawText({ buffer });
+      return (result.value || '').replace(/\s+/g, ' ').trim().slice(0, 6000);
+    }
+    return '';
+  } catch (err) {
+    console.error('No se pudo leer el CV para IA:', err.message);
+    return '';
   }
 }
 
 /**
- * @swagger
- * /api/ia/analizar-candidato:
- *   post:
- *     summary: Generar análisis preliminar y guía de entrevista psicolaboral con IA (Datos Anonimizados)
- *     tags: [Inteligencia Artificial]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Análisis y preguntas sugeridas generadas
+- @swagger
+- /api/ia/analizar-candidato:
+-   post:
+-     summary: Generar análisis preliminar y guía de entrevista psicolaboral con IA (CV + Oferta real)
+-     tags: [Inteligencia Artificial]
+-     security:
+-       - bearerAuth: []
+-     responses:
+-       200:
+-         description: Análisis y preguntas sugeridas generadas
  */
 app.post('/api/ia/analizar-candidato', verificarToken, async (req, res) => {
   const { postulacionId, cargo, familiaCargo, observacionesPrevias } = req.body;
 
-  if (!cargo) {
-    return res.status(400).json({ error: 'El campo cargo es obligatorio para el análisis.' });
+  if (!cargo && !postulacionId) {
+    return res.status(400).json({ error: 'Se requiere postulacionId o cargo para el análisis.' });
   }
 
-  // Cálculo base dinámico por candidato (en caso de respaldo local sin red)
-  const huella = `${postulacionId || 1}-${cargo}-${familiaCargo || ''}-${observacionesPrevias || ''}`;
-  const hash = huella.split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
-  const puntajeDinamico = 71 + (hash % 23); // Varía entre 71% y 93%
+  try {
+    // 1. Obtener contexto real completo desde la base de datos (Oferta + Evaluación + Ruta CV)
+    let postulacionDB = null;
+    if (postulacionId) {
+      postulacionDB = await prisma.postulacion.findUnique({
+        where: { id: Number(postulacionId) },
+        include: {
+          oferta: true,
+          evaluacion: true,
+        },
+      });
+    }
 
-  let resultado = {
-    puntajeOrientativo: puntajeDinamico,
-    resumen: `Evaluación orientativa para "${cargo}" (${familiaCargo || 'Área General'}). ${
-      observacionesPrevias
-        ? 'Se consideran las observaciones registradas en ficha para profundizar competencias conductuales.'
-        : 'Se recomienda indagar experiencia previa en cargos similares y adherencia a protocolos de seguridad.'
-    }`,
-    criteriosEvaluados: [
-      `Alineación funcional con el cargo: ${cargo}`,
-      `Competencias críticas de la familia: ${familiaCargo || 'Operaciones Acuícolas'}`,
-      observacionesPrevias
-        ? 'Análisis de observaciones clínicas registradas'
-        : 'Evaluación de antecedentes base del postulante',
-    ],
-    preguntasSugeridas: [
-      `En relación con el rol de ${cargo}, ¿cuál ha sido el desafío operativo más complejo que has resuelto?`,
-      '¿Cómo reaccionas cuando debes cumplir protocolos estrictos de seguridad bajo presión de tiempo?',
-      'Describe una situación en la que tuviste que coordinarte con un equipo multidisciplinario en terreno.',
-    ],
-  };
+    const cargoBruto = postulacionDB?.oferta?.cargo || cargo || 'Cargo no especificado';
+    const cargoLimpio = cargoBruto.replace(/\s*Test\s*\d+$/i, '').trim() || cargoBruto;
+    const familiaReal = postulacionDB?.oferta?.familiaCargo || familiaCargo || 'Operaciones y Producción';
+    const descripcionOferta = postulacionDB?.oferta?.descripcion || 'No especificada';
+    const funcionesOferta = postulacionDB?.oferta?.funciones || 'No especificadas';
+    const requisitosOferta = postulacionDB?.oferta?.requisitos || 'No especificados';
+    const obsReales =
+      (observacionesPrevias && observacionesPrevias.trim()) ||
+      postulacionDB?.evaluacion?.observaciones ||
+      '';
 
-  const groqApiKey = process.env.GROQ_API_KEY;
-  if (groqApiKey && groqApiKey.trim() !== '') {
-    try {
-      const apiKeyLimpia = groqApiKey.trim();
-      const modeloGroq = await obtenerModeloGroqActivo(apiKeyLimpia);
+    // 2. Extraer texto real del CV (anonimizando datos de contacto básicos antes de enviar a Groq)
+    let textoCV = await extraerTextoCV(postulacionDB?.cvRutaArchivo);
+    if (textoCV) {
+      textoCV = textoCV
+        .replace(/\b\d{1,2}\.?\d{3}\.?\d{3}-[\dkK]\b/g, '[RUT_ANONIMIZADO]')
+        .replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, '[EMAIL_ANONIMIZADO]')
+        .replace(/(\+?56\s?9\s?\d{4}\s?\d{4})/g, '[TELEFONO_ANONIMIZADO]');
+    }
 
-      const promptAnonimizado = `Eres un psicólogo laboral senior especializado en selección para la industria acuícola en el sur de Chile (AquaChile).
-Evalúa de forma orientativa este caso ANONIMIZADO (sin datos personales):
-- Código de caso: #${postulacionId || 'N/A'}
-- Cargo postulado: ${cargo}
-- Familia ocupacional: ${familiaCargo || 'General'}
-- Observaciones clínicas/previas del evaluador: ${
-        observacionesPrevias && observacionesPrevias.trim() !== ''
-          ? observacionesPrevias
-          : 'Sin observaciones previas registradas en ficha'
-      }
+    const groqApiKey = (process.env.GROQ_API_KEY || '').trim();
+    if (!groqApiKey) {
+      return res.status(500).json({ error: 'GROQ_API_KEY no configurada en el servidor.' });
+    }
 
-Instrucciones estrictas:
-1. Genera un puntajeOrientativo entero realista entre 68 y 95 acorde al nivel de complejidad del cargo y observaciones.
-2. Redacta un resumen técnico específico de 2 a 3 líneas enfocado en las exigencias reales de "${cargo}".
-3. Formula 3 criteriosEvaluados concretos y 3 preguntasSugeridas conductuales (metodología STAR) específicas para "${cargo}".
+    const promptReal = `Eres un Psicólogo Laboral Senior de AquaChile (industria salmonicultora/acuícola en el sur de Chile).
+Analiza de forma objetiva, rigurosa y consistente la adecuación de un candidato para el cargo real indicado, basándote EXCLUSIVAMENTE en los antecedentes entregados (sin inventar experiencia que no aparezca en el CV ni en las observaciones).
 
-Devuelve EXCLUSIVAMENTE un objeto JSON válido con esta estructura exacta:
+=== PERFIL DEL CARGO ===
+- Cargo: ${cargoLimpio}
+- Familia ocupacional: ${familiaReal}
+- Descripción del puesto: ${descripcionOferta}
+- Funciones principales: ${funcionesOferta}
+- Requisitos del perfil: ${requisitosOferta}
+
+=== ANTECEDENTES DEL CANDIDATO (ANONIMIZADOS) ===
+- Contenido extraído del CV: ${textoCV ? textoCV : 'ATENCIÓN: No se encontró texto legible en el CV adjunto (puede ser un archivo de prueba vacío o escaneado sin OCR). Evalúa con cautela indicando esta limitación.'}
+- Observaciones clínicas/entrevista previas del evaluador: ${obsReales ? obsReales : 'Sin observaciones registradas aún.'}
+
+=== REGLAS ESTRICTAS DE EVALUACIÓN ===
+1. "puntajeOrientativo" (entero de 0 a 100):
+   - Si el CV está vacío o no tiene relación con "${cargoLimpio}", asigna un puntaje bajo/moderado realista (entre 35 y 60) explicando que falta evidencia documental.
+   - Si el CV cumple parcialmente los requisitos de "${cargoLimpio}", asigna entre 61 y 79.
+   - Solo asigna 80 o más si el CV demuestra experiencia directa y verificable en funciones y requisitos de "${cargoLimpio}".
+2. "resumen": 2 a 3 oraciones técnicas que contrasten directamente lo encontrado en el CV/observaciones con los requisitos reales de "${cargoLimpio}".
+3. "criteriosEvaluados": exactamente 3 puntos concretos sobre brechas o fortalezas reales detectadas respecto a "${cargoLimpio}" (ej. años de experiencia, certificaciones, conocimientos técnicos específicos del puesto).
+4. "preguntasSugeridas": exactamente 3 preguntas de entrevista conductual (metodología STAR) diseñadas específicamente para validar los requisitos críticos y brechas detectadas para "${cargoLimpio}" (prohibido usar preguntas genéricas de relleno).
+
+Responde ÚNICAMENTE con un JSON válido:
 {
-  "puntajeOrientativo": 84,
-  "resumen": "texto...",
-  "criteriosEvaluados": ["criterio 1", "criterio 2", "criterio 3"],
-  "preguntasSugeridas": ["pregunta 1", "pregunta 2", "pregunta 3"]
+  "puntajeOrientativo": 55,
+  "resumen": "...",
+  "criteriosEvaluados": ["...", "...", "..."],
+  "preguntasSugeridas": ["...", "...", "..."]
 }`;
 
-      const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${apiKeyLimpia}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: modeloGroq,
-          messages: [
-            {
-              role: 'system',
-              content:
-                'Eres un asistente de apoyo psicolaboral. Respondes únicamente en formato JSON válido, en español, adaptado específicamente al cargo indicado.',
-            },
-            { role: 'user', content: promptAnonimizado },
-          ],
-          temperature: 0.75,
-          max_tokens: 1200,
-          response_format: { type: 'json_object' },
-        }),
+    const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${groqApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          {
+            role: 'system',
+            content:
+              'Eres un psicólogo laboral experto en selección acuícola. Respondes exclusivamente en JSON válido en español, con criterios técnicos estrictos y consistentes.',
+          },
+          { role: 'user', content: promptReal },
+        ],
+        temperature: 0.1,
+        max_tokens: 1200,
+        response_format: { type: 'json_object' },
+      }),
+    });
+
+    if (!groqRes.ok) {
+      const errDetalle = await groqRes.text();
+      console.error('Error respuesta Groq:', groqRes.status, errDetalle);
+      return res.status(502).json({
+        error: `Error al consultar el motor IA (${groqRes.status}). Verifica que GROQ_API_KEY sea válida en Render.`,
       });
-
-      if (groqRes.ok) {
-        const groqData = await groqRes.json();
-        const parsed = JSON.parse(groqData.choices[0].message.content);
-        resultado = {
-          puntajeOrientativo: Number(parsed.puntajeOrientativo) || puntajeDinamico,
-          resumen: parsed.resumen || resultado.resumen,
-          criteriosEvaluados:
-            Array.isArray(parsed.criteriosEvaluados) && parsed.criteriosEvaluados.length > 0
-              ? parsed.criteriosEvaluados
-              : resultado.criteriosEvaluados,
-          preguntasSugeridas:
-            Array.isArray(parsed.preguntasSugeridas) && parsed.preguntasSugeridas.length > 0
-              ? parsed.preguntasSugeridas
-              : resultado.preguntasSugeridas,
-        };
-        console.log(
-          `Groq AI (${modeloGroq}) respondió OK para postulación #${postulacionId} (${cargo}) -> ${resultado.puntajeOrientativo}%`
-        );
-      } else {
-        const errBody = await groqRes.text();
-        console.error('Error respuesta Groq:', groqRes.status, errBody);
-      }
-    } catch (err) {
-      console.error('Error conexión Groq:', err.message);
     }
-  } else {
-    console.warn('GROQ_API_KEY no encontrada en process.env');
-  }
 
-  if (postulacionId) {
-    try {
+    const groqData = await groqRes.json();
+    const parsed = JSON.parse(groqData.choices[0].message.content);
+
+    const resultado = {
+      puntajeOrientativo: Math.min(100, Math.max(0, Number(parsed.puntajeOrientativo) || 50)),
+      resumen: parsed.resumen,
+      criteriosEvaluados: Array.isArray(parsed.criteriosEvaluados) ? parsed.criteriosEvaluados : [],
+      preguntasSugeridas: Array.isArray(parsed.preguntasSugeridas) ? parsed.preguntasSugeridas : [],
+    };
+
+    if (postulacionId) {
       await prisma.postulacion.update({
         where: { id: Number(postulacionId) },
         data: {
@@ -626,12 +636,13 @@ Devuelve EXCLUSIVAMENTE un objeto JSON válido con esta estructura exacta:
           resumenIA: resultado.resumen,
         },
       });
-    } catch (dbErr) {
-      console.error('Error guardando IA en BD:', dbErr.message);
     }
-  }
 
-  res.json(resultado);
+    return res.json(resultado);
+  } catch (error) {
+    console.error('Error interno en /api/ia/analizar-candidato:', error);
+    return res.status(500).json({ error: 'Error interno al procesar el análisis con IA.' });
+  }
 });
 
 // ==========================================
