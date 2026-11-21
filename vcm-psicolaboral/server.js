@@ -512,7 +512,7 @@ Responde ÚNICAMENTE con un JSON válido:
   } catch (error) {
     console.error('Error interno en /api/ia/analizar-candidato:', error);
     return res.status(500).json({ 
-      error: 'Error interno IA: ${error.message}', 
+      error: `Error interno IA: ${error.message}`, 
     });
   }
 });
