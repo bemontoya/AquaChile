@@ -2,12 +2,13 @@
 
 const MAPA_ESTADO_DESDE_BD = {
   PENDIENTE: 'Pendiente',
-  EN_PROCESO: 'En Proceso',
+  EN_PROCESO: 'En proceso',
   FINALIZADA: 'Finalizada',
 };
 
 const MAPA_ESTADO_A_BD = {
   Pendiente: 'PENDIENTE',
+  'En proceso':'EN_PROCESO',
   'En Proceso': 'EN_PROCESO',
   Finalizada: 'FINALIZADA',
   Evaluado: 'FINALIZADA',
