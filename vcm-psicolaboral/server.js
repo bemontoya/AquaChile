@@ -511,7 +511,9 @@ Responde ÚNICAMENTE con un JSON válido:
     return res.json(resultado);
   } catch (error) {
     console.error('Error interno en /api/ia/analizar-candidato:', error);
-    return res.status(500).json({ error: 'Error interno IA: ${error.message}' });
+    return res.status(500).json({ 
+      error: 'Error interno IA: ${error.message}', 
+    });
   }
 });
 
