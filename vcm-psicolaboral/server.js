@@ -464,7 +464,7 @@ Responde ÚNICAMENTE con un JSON válido:
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
+        model: 'llama-3.1-8b-instant',
         messages: [
           {
             role: 'system',
@@ -483,7 +483,7 @@ Responde ÚNICAMENTE con un JSON válido:
       const errDetalle = await groqRes.text();
       console.error('Error Groq API:', groqRes.status, errDetalle);
       return res.status(502).json({
-        error: `Error al consultar Groq (${groqRes.status}). Verifica que GROQ_API_KEY sea válida en Render.`,
+        error: `Error Groq (${groqRes.status}): ${errDetalle}`,
       });
     }
 
