@@ -18,16 +18,6 @@ const pdfParse = require('pdf-parse');
 
 const app = express();
 const prisma = new PrismaClient();
-// Asegurar columnas persistentes de CV en PostgreSQL al iniciar
-prisma.$executeRawUnsafe(`
-  ALTER TABLE "Postulacion"
-  ADD COLUMN IF NOT EXISTS "cvTextoExtraido" TEXT,
-  ADD COLUMN IF NOT EXISTS "cvContenidoBase64" TEXT;
-`).then(() => {
-  console.log('Columnas cvTextoExtraido y cvContenidoBase64 verificadas en BD');
-}).catch((err) => {
-  console.error('Error verificando columnas en BD:', err.message);
-});
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 app.use(cors());
@@ -452,9 +442,9 @@ Analiza de forma objetiva, rigurosa y consistente la adecuación de un candidato
 
 === REGLAS ESTRICTAS DE EVALUACIÓN ===
 1. "puntajeOrientativo" (entero de 0 a 100):
-   - Si el CV está vacío o no tiene relación con "${cargoLimpio}", asigna un puntaje bajo/moderado realista (entre 35 y 60) explicando que falta evidencia documental.
-   - Si el CV cumple parcialmente los requisitos de "${cargoLimpio}", asigna entre 61 y 79.
-   - Solo asigna 80 o más si el CV demuestra experiencia directa y verificable en funciones y requisitos de "${cargoLimpio}".
+  - Si el CV está vacío o no tiene relación con "${cargoLimpio}", asigna un puntaje bajo/moderado realista (entre 35 y 60) explicando que falta evidencia documental.
+  - Si el CV cumple parcialmente los requisitos de "${cargoLimpio}", asigna entre 61 y 79.
+  - Solo asigna 80 o más si el CV demuestra experiencia directa y verificable en funciones y requisitos de "${cargoLimpio}".
 2. "resumen": 2 a 3 oraciones técnicas que contrasten directamente lo encontrado en el CV/observaciones con los requisitos reales de "${cargoLimpio}".
 3. "criteriosEvaluados": exactamente 3 puntos concretos sobre brechas o fortalezas reales detectadas respecto a "${cargoLimpio}" (ej. años de experiencia, certificaciones, conocimientos técnicos específicos del puesto).
 4. "preguntasSugeridas": exactamente 3 preguntas de entrevista conductual (metodología STAR) diseñadas específicamente para validar los requisitos críticos y brechas detectadas para "${cargoLimpio}" (prohibido usar preguntas genéricas de relleno).
@@ -521,22 +511,39 @@ Responde ÚNICAMENTE con un JSON válido:
     return res.json(resultado);
   } catch (error) {
     console.error('Error interno en /api/ia/analizar-candidato:', error);
-    return res.status(500).json({ 
-      error: 'Error interno IA: ' +  (error?.message || String(error)), 
+    return res.status(500).json({
+      error: 'Error interno IA: ' + (error?.message || String(error)),
     });
   }
 });
 
 // ==========================================
-// INICIAR SERVIDOR
+// INICIAR SERVIDOR (ASEGURANDO COLUMNAS EN BD)
 // ==========================================
 
 const PORT = process.env.PORT || 3001;
-if (process.env.NODE_ENV !== 'test') {
-  app.listen(PORT, () => {
-    console.log(`Servidor corriendo en el puerto ${PORT}`);
-    console.log(`Documentación Swagger disponible en http://localhost:${PORT}/api-docs`);
-  });
+
+async function iniciarServidor() {
+  try {
+    await prisma.$executeRawUnsafe(
+      'ALTER TABLE "Postulacion" ADD COLUMN IF NOT EXISTS "cvTextoExtraido" TEXT;'
+    );
+    await prisma.$executeRawUnsafe(
+      'ALTER TABLE "Postulacion" ADD COLUMN IF NOT EXISTS "cvContenidoBase64" TEXT;'
+    );
+    console.log('Columnas cvTextoExtraido y cvContenidoBase64 listas en PostgreSQL.');
+  } catch (err) {
+    console.error('Error al verificar columnas en PostgreSQL:', err.message);
+  }
+
+  if (process.env.NODE_ENV !== 'test') {
+    app.listen(PORT, () => {
+      console.log(`Servidor corriendo en el puerto ${PORT}`);
+      console.log(`Documentación Swagger disponible en http://localhost:${PORT}/api-docs`);
+    });
+  }
 }
+
+iniciarServidor();
 
 export default app;
