@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import GraficoPorArea from './GraficoPorArea';
+import GraficoPorEvaluador from './GraficoPorEvaluador';
 
 const COLOR_PRIMARIO = '#0d3c61';
 const tarjeta = { border: '1px solid #e5e7eb', boxShadow: 'none' };
@@ -123,11 +124,11 @@ export default function Dashboard({ solicitudes = [], candidatos = [] }) {
 
       {/* Solicitudes + gráfico (cada tarjeta toma la altura de su contenido) */}
       <div className="row g-4 mb-4 align-items-start">
-        <div className="col-12 col-lg-5 order-2">
+        <div className="col-12 col-md-5 order-2">
           <GraficoPorArea solicitudes={solicitudes} />
         </div>
 
-        <div className="col-12 col-lg-7 order-1">
+        <div className="col-12 col-md-7 order-1">
           <div className="card rounded-3" style={tarjeta}>
             <div className="card-body p-4">
               <EncabezadoSeccion
@@ -177,9 +178,11 @@ export default function Dashboard({ solicitudes = [], candidatos = [] }) {
         </div>
       </div>
 
-      {/* Candidatos */}
-      <div className="card rounded-3 mb-4" style={tarjeta}>
-        <div className="card-body p-4">
+      {/* Candidatos + Carga por evaluador*/}
+      <div className="row g-4 mb-4 align-items-start">
+        <div className="col-12 col-md-7">
+          <div className='card rounded-3' style={tarjeta}>
+            <div className='card-body p-4'>
           <EncabezadoSeccion
             titulo="Gestión de candidatos"
             enlace="Ver todos"
@@ -231,6 +234,12 @@ export default function Dashboard({ solicitudes = [], candidatos = [] }) {
               </li>
             ))}
           </ul>
+        </div>
+      </div>
+        </div>
+
+        <div className="col-12 col-md-5">
+          <GraficoPorEvaluador solicitudes={solicitudes} />
         </div>
       </div>
     </div>
