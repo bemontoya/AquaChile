@@ -1,5 +1,21 @@
-export default function SolicitudesTabla({ solicitudes }) {
-  
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+export default function SolicitudesTabla({ solicitudes,candidatos=[], onActualizar }) {
+  const navigate= useNavigate()
+  const [evaluando, setEvaluando]=useState(null)
+  const [categoria, setCategoria]=useState('Recomendado')
+  const [observaciones, setObservaciones]=useState('')
+
+  const cambiarEstado=(solicitud, nuevoEstado)=>{
+    onActualizar((prev)=>
+    prev.map((s)=>(s.id === solicitud.id ? {...s,estado: nuevoEstado}:s)))
+  }
+
+  const verDetalle=(solicitud)=>{
+    const candidato=candidatos.find((c)=>c.rut===solicitud.rut)
+    navigate(candidato ? `/candidatos/${candidato.id}`:'/candidatos')
+  }
   // Se asignan clases de color a las etiquetas de estado
   // Devuelve verde si el estado está en finalizado, azul si está en proceso y amarillo si está pendiente
   const getBadgeClass = (estado) => {
@@ -17,29 +33,23 @@ export default function SolicitudesTabla({ solicitudes }) {
 
   // Devuelve el botón de acción correspondiente a cada estado
   // Se usa const para que el valor no se pueda reasignar
-  const getAccionBtn = (estado) => {
-    if (estado === 'Finalizada') {
-      // Texto simple sin borde para Ver Detalle
-      return (
-        <button className="btn btn-link btn-sm text-decoration-none text-success p-0 border-0 align-baseline fw-medium">
-          Ver Detalle <i className="bi bi-eye ms-1"></i>
-        </button>
-      );
-    } else if (estado === 'En proceso') {
-      // Botón delineado azul para Evaluar
-      return (
-        <button className="btn btn-link btn-sm text-decoration-none text-primary p-0 border-0 align-baseline fw-medium">
-          Evaluar <i className="bi bi-pencil-square ms-1"></i>
-        </button>
-      );
-    } else {
-      // Botón delineado amarillo/naranja para Iniciar Evaluación
-      return (
-        <button className="btn btn-link btn-sm text-decoration-none text-warning-emphasis p-0 border-0 align-baseline fw-medium">
-          Iniciar Evaluación <i className="bi bi-play-fill ms-1"></i>
-        </button>
-      );
+  const getAccionBtn = (item) => {
+    if(item.estado==='Finalizada'){
+      return(
+        <button className="btn btn-link btn-sm text-decoration-none text-success p-0 border-0 align-baseline fw-medium"
+          onClick={()=>verDetalle(item)}>Ver Detalle<i className="bi bi-eye ms-1"></i></button>
+      )
     }
+    if (item.estado==='En proceso'){
+      return(
+        <button className="btn btn-link btn-sm text-decoration-none text-primary p-0 border-0 align-baseline fw-medium"
+          onClick={()=>setEvaluando(item)}>Evaluar<i className="bi bi-pencil-square ms-1"></i></button>
+      )
+    }
+    return(
+      <button className="btn btn-link btn-sm text-decoration-none text-warning-emphasis p-0 border-0 align-baseline fw-medium"
+        onClick={()=>cambiarEstado(item,'En proceso')}>Iniciar Evaluación<i className="bi bi-play-fill ms-1"></i></button>
+    )
   };
 
   return (
@@ -105,7 +115,7 @@ export default function SolicitudesTabla({ solicitudes }) {
 
                   {/* Botón según el estado actual */}
                   <td className="text-end px-3">
-                    {getAccionBtn(item.estado)}
+                    {getAccionBtn(item)}
                   </td>
                 </tr>
               ))
@@ -122,17 +132,55 @@ export default function SolicitudesTabla({ solicitudes }) {
         </table>
       </div>
 
-      {/* Pie de tabla con información de paginación */}
-      <div className="card-footer bg-white border-top py-2 d-flex justify-content-between align-items-center text-muted small">
+      {/* Pie de tabla */}
+      <div className="card-footer bg-white border-top py-2 text-muted small">
         <span>Mostrando {solicitudes.length} registro(s)</span>
-        <div className="d-flex align-items-center gap-2">
-          <span>Filas por página:</span>
-          <select className="form-select form-select-sm w-auto">
-            <option>6</option>
-            <option>10</option>
-          </select>
-        </div>
       </div>
+
+      {/* Modal de evaluación. El backend guarda solo el estado. */}
+      {evaluando && (
+        <div className="modal d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title fs-6">Evaluar solicitud</h5>
+                <button type="button" className="btn-close" onClick={() => setEvaluando(null)}></button>
+              </div>
+              <div className="modal-body">
+                <p className="text-muted small mb-3">
+                  {evaluando.codigo || evaluando.id} · {evaluando.candidato}
+                </p>
+                <label className="form-label small fw-semibold">Resultado</label>
+                <select className="form-select form-select-sm mb-3" value={categoria}
+                        onChange={(e) => setCategoria(e.target.value)}>
+                  <option>Recomendado</option>
+                  <option>Recomendado con observaciones</option>
+                  <option>No recomendado</option>
+                </select>
+                <label className="form-label small fw-semibold">Observaciones</label>
+                <textarea className="form-control form-control-sm" rows="3" value={observaciones}
+                          onChange={(e) => setObservaciones(e.target.value)}
+                          placeholder="Observaciones de la evaluación..." />
+                <p className="text-muted small mt-2 mb-0">
+                  Categoría y observaciones quedan en la vista; el backend persiste solo el estado.
+                </p>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-sm btn-light border"
+                        onClick={() => setEvaluando(null)}>Cancelar</button>
+                <button type="button" className="btn btn-sm btn-primary"
+                        onClick={() => {
+                          cambiarEstado(evaluando, 'Finalizada')
+                          setEvaluando(null)
+                          setObservaciones('')
+                        }}>
+                  Finalizar evaluación
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

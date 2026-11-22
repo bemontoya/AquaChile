@@ -178,7 +178,11 @@ export default function App() {
                 </div>
 
                 {modoSolicitudes === 'tabla' ? (
-                  <SolicitudesTabla solicitudes={solicitudesFiltradas} />
+                  <SolicitudesTabla 
+                  solicitudes={solicitudesFiltradas}
+                  candidatos={candidatos}
+                  onActualizar={handleActualizarSolicitudes}
+                  />
                 ) : (
                   <KanbanSolicitudes
                     solicitudes={solicitudesBuscadas}
