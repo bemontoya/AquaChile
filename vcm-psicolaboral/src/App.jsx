@@ -33,18 +33,29 @@ export default function App() {
   const [filtroActual, setFiltroActual] = useState('Todos')
   const [busqueda, setBusqueda] = useState('')
   const [modoSolicitudes, setModoSolicitudes] = useState('kanban')
+  const [cargandoBD, setCargandoBD] = useState(Boolean(usuario))
+  const [errorBD, setErrorBD] = useState(false) 
   const navigate = useNavigate()
 
   useEffect(() => {
     if (!usuario) return
+    let activo = true
+    
+    setCargandoBD(true)
+    setErrorBD(false)
+
     cargarDatosDesdeBD()
       .then((datos) => {
-        if (datos && datos.solicitudesBD.length > 0) {
+        if (!activo) return 
+        if (!datos) { setErrorBD(true); return}
+        if (datos.solicitudesBD.length > 0){
           setSolicitudes([...datos.solicitudesBD, ...solicitudesIniciales])
           setCandidatos([...datos.candidatosBD, ...candidatosIniciales])
         }
       })
-      .catch(() => {})
+      .catch(() => { if (activo) setErrorBD(true) })
+      .finally(() => {if (activo) setCargandoBD(false)})
+      return () => { activo = false }
   }, [usuario])
 
   const handleLogout = () => {
@@ -90,6 +101,19 @@ export default function App() {
       <Navbar usuario={usuario} onLogout={handleLogout} />
 
       <main className="container-fluid px-4 py-4">
+
+        {cargandoBD && (
+          <div className="alert alert-info py-2 small d-flex align-items-center gap-2" role="status">
+            <span className="spinner-border spinner-border-sm" aria-hidden="true"></span>
+            Sincronizando datos con la base de datos…
+          </div>
+        )}
+        {!cargandoBD && errorBD && (
+          <div className="alert alert-warning py-2 small" role="alert">
+            No se pudo cargar la información remota. Se muestran los datos de demostración.
+          </div>
+        )}
+
         <Routes>
           {/* Rutas Públicas (Sin Login) */}
           <Route path="/empleos" element={<PortalEmpleos />} />
