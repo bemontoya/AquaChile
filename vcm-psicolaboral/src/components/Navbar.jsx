@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 
 export default function Navbar({ usuario, onLogout }) {
@@ -9,6 +10,24 @@ export default function Navbar({ usuario, onLogout }) {
     .slice(0, 2)
     .map((p) => p[0].toUpperCase())
     .join('');
+  const [menuAbierto,setMenuAbierto]=useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    if (!menuAbierto) return;
+    const cerrarSiAfuera = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuAbierto(false);
+      }
+    };
+    document.addEventListener('mousedown', cerrarSiAfuera);
+    return () => document.removeEventListener('mousedown', cerrarSiAfuera);
+  }, [menuAbierto]);
+
+  // Al entrar o salir de una sesión, el menú empieza cerrado
+  useEffect(() => {
+    setMenuAbierto(false);
+  }, [usuario]);
 
   return (
     <nav className="navbar navbar-expand bg-white border-bottom px-2 px-md-4 py-2 shadow-sm">
@@ -94,28 +113,49 @@ export default function Navbar({ usuario, onLogout }) {
 
           {/* Perfil del usuario o Acceso Interno */}
           {usuario ? (
-            <div className="d-flex align-items-center gap-2">
-              <div className="text-end me-2">
-                <div className="fw-bold small">{nombreMostrar}</div>
-                <div className="text-muted small" style={{ fontSize: '0.75rem' }}>{rolMostrar}</div>
-              </div>
-
-              <div
-                className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold"
-                style={{ width: '36px', height: '36px' }}
-              >
-                {iniciales}
-              </div>
-
-              {onLogout && (
-                <button
-                  type="button"
-                  className="btn btn-sm btn-outline-danger ms-2"
-                  onClick={onLogout}
-                  title="Cerrar sesión"
-                >
-                  <i className="bi bi-box-arrow-right"></i> Salir
+            <div className='position-relative' ref={menuRef}>
+              <button
+                type='button'
+                className='btn btn-sm p-0 border-0 bg-transparent d-flex align-items-center gap-2'
+                onClick={()=>setMenuAbierto(!menuAbierto)}
+                aria-expanded={menuAbierto}
+                title='Menú de perfil'>
+                  <span className='text-end d-none d-sm-block'>
+                    <span className='d-block fw-bold small lh-sm'>{nombreMostrar}</span>
+                  </span>
+                  <span
+                  className='bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold'
+                  style={{ width: '36px', height: '36px'}}>{iniciales}</span>
+                  <i className='bi bi-chevron-down text-muted small'
+                  style={{transform: menuAbierto ? 'rotate(180deg)':'none'}}></i>
                 </button>
+
+                {menuAbierto && (
+                 <> 
+                  <div
+                    className="dropdown-menu dropdown-menu-end show mt-2 shadow-sm"
+                    style={{ display: 'block', minWidth: '230px', zIndex: 1041 }}
+                  >
+                    <div className="px-3 py-2 border-bottom">
+                      <div className="text-muted" style={{ fontSize: '0.75rem' }}>
+                        {usuario?.email || '—'}
+                      </div>
+                      <span className="badge bg-primary-subtle text-primary-emphasis border border-primary-subtle fw-normal mt-2">
+                        {rolMostrar}
+                      </span>
+                    </div>
+                    <div className="dropdown-divider"></div>
+                    {onLogout && (
+                      <button
+                        type="button"
+                        className="dropdown-item small text-danger d-flex align-items-center gap-2"
+                        onClick={onLogout}
+                      >
+                        <i className="bi bi-box-arrow-right"></i> Cerrar sesión
+                      </button>
+                    )}
+                  </div>
+                </>
               )}
             </div>
           ) : (
