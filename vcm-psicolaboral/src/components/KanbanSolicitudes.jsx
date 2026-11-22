@@ -73,14 +73,14 @@ function ColumnaKanban({ estado, solicitudes, color }) {
 
   return (
     <div className="col-12 col-lg-4 mb-3">
-      <div className="card border-0 shadow-sm h-100">
+      <div className="card border-0 shadow-sm">
         <div className={`card-header border-0 py-2 px-3 ${color} bg-opacity-10`}>
           <div className="d-flex justify-content-between align-items-center">
             <span className="fw-semibold small">{estado}</span>
             <span className="badge bg-white text-dark border">{solicitudesFiltradas.length}</span>
           </div>
         </div>
-        <div className="card-body p-2" style={{ minHeight: '400px' }}>
+        <div className="card-body p-2" style={{ minHeight: '80px' }}>
           <SortableContext items={ids} strategy={verticalListSortingStrategy}>
             {solicitudesFiltradas.map((solicitud) => (
               <TarjetaSolicitud key={solicitud.id} solicitud={solicitud} />
@@ -109,6 +109,8 @@ export default function KanbanSolicitudes({ solicitudes, setSolicitudes }) {
   )
 
   const dropAnimation = {
+    duration: 350,
+    easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)',
     sideEffects: defaultDropAnimationSideEffects({
       styles: {
         active: {
@@ -177,7 +179,7 @@ export default function KanbanSolicitudes({ solicitudes, setSolicitudes }) {
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="row">
+      <div className="row align-items-start">
         <ColumnaKanban estado="Pendiente" solicitudes={solicitudes} color="bg-warning" />
         <ColumnaKanban estado="En proceso" solicitudes={solicitudes} color="bg-info" />
         <ColumnaKanban estado="Finalizada" solicitudes={solicitudes} color="bg-success" />
