@@ -397,7 +397,7 @@ app.delete('/api/postulaciones/:id', verificarToken, permitirRoles('ANALISTA'), 
 // 4. NOTIFICACIONES POR CORREO (GMAIL SMTP - NODEMAILER)
 // ==========================================
 
-app.post('/api/enviar-confirmacion', async (req, res) => {
+app.post(['/api/enviar-confirmacion', '/api/api/enviar-confirmacion'], async (req, res) => {
   const { nombre, email, cargo } = req.body;
   console.log('Intentando enviar correo a:', email, 'desde:', process.env.EMAIL_USER);
 
