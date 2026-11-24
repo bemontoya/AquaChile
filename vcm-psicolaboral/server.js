@@ -632,25 +632,23 @@ Responde ÚNICAMENTE con un JSON válido:
 
 const PORT = process.env.PORT || 3001;
 
-async function iniciarServidor() {
-  try {
-    await prisma.$executeRawUnsafe(
-      'ALTER TABLE "Postulacion" ADD COLUMN IF NOT EXISTS "cvTextoExtraido" TEXT;'
-    );
-    await prisma.$executeRawUnsafe(
-      'ALTER TABLE "Postulacion" ADD COLUMN IF NOT EXISTS "cvContenidoBase64" TEXT;'
-    );
-    console.log('Columnas cvTextoExtraido y cvContenidoBase64 listas en PostgreSQL.');
-  } catch (err) {
-    console.error('Error al verificar columnas en PostgreSQL:', err.message);
-  }
-
+function iniciarServidor() {
   if (process.env.NODE_ENV !== 'test') {
-    app.listen(PORT, () => {
+    app.listen(PORT, '0.0.0.0', () => {
       console.log(`Servidor corriendo en el puerto ${PORT}`);
       console.log(`Documentación Swagger disponible en http://localhost:${PORT}/api-docs`);
     });
   }
+
+  prisma
+    .$executeRawUnsafe('ALTER TABLE "Postulacion" ADD COLUMN IF NOT EXISTS "cvTextoExtraido" TEXT;')
+    .then(() =>
+      prisma.$executeRawUnsafe(
+        'ALTER TABLE "Postulacion" ADD COLUMN IF NOT EXISTS "cvContenidoBase64" TEXT;'
+      )
+    )
+    .then(() => console.log('Columnas cvTextoExtraido y cvContenidoBase64 listas en PostgreSQL.'))
+    .catch((err) => console.error('Error al verificar columnas en PostgreSQL:', err.message));
 }
 
 iniciarServidor();
