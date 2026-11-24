@@ -48,6 +48,22 @@ async function extraerTextoDesdeBuffer(buffer, nombreArchivo) {
 }
 
 // ==========================================
+// 0. HEALTH CHECK & WARM-UP (DESPERTAR RENDER + NEON (evitar demora al iniciar sesión))
+// ==========================================
+app.get('/api/health', async (req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  } catch (error) {
+    res.status(503).json({ status: 'warming_up', error: error.message });
+  }
+});
+
+
+
+
+
+// ==========================================
 // 1. AUTENTICACIÓN (JWT)
 // ==========================================
 
