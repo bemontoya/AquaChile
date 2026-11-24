@@ -11,23 +11,12 @@ import mammoth from 'mammoth';
 import { verificarToken, permitirRoles } from './middlewares/auth.js';
 import { configurarSwagger } from './swagger.js';
 import { uploadCV } from './middlewares/uploadCV.js';
-import nodemailer from 'nodemailer';
 
 const require = createRequire(import.meta.url);
 const pdfParse = require('pdf-parse');
 
 const app = express();
 const prisma = new PrismaClient();
-
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 465,
-  secure: true,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
 
 app.use(cors());
 app.use(express.json());
@@ -394,37 +383,58 @@ app.delete('/api/postulaciones/:id', verificarToken, permitirRoles('ANALISTA'), 
 });
 
 // ==========================================
-// 4. NOTIFICACIONES POR CORREO (GMAIL SMTP - NODEMAILER)
+// 4. NOTIFICACIONES POR CORREO (BREVO API HTTP - PUERTO 443)
 // ==========================================
 
 app.post(['/api/enviar-confirmacion', '/api/api/enviar-confirmacion'], async (req, res) => {
-  const { nombre, email, cargo } = req.body;
-  console.log('Intentando enviar correo a:', email, 'desde:', process.env.EMAIL_USER);
+  const { nombre, email, cargo, fecha, hora, notas } = req.body;
 
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    console.error('ERROR SMTP: Faltan EMAIL_USER o EMAIL_PASS en variables de entorno.');
-    return res.status(500).json({ success: false, error: 'Faltan EMAIL_USER o EMAIL_PASS en Render.' });
+  if (!process.env.BREVO_API_KEY) {
+    return res.status(500).json({ success: false, error: 'Falta BREVO_API_KEY en Render.' });
   }
 
+  console.log(`Enviando correo vía Brevo API a: ${email}`);
+
   try {
-    const info = await transporter.sendMail({
-      from: `"AquaChile Reclutamiento" <${process.env.EMAIL_USER}>`,
-      to: email,
-      subject: 'Notificación de Proceso - AquaChile',
-      html: `
-        <div style="font-family: Arial, sans-serif; color: #333;">
-          <h2 style="color: #0d3c61;">Hola ${nombre},</h2>
-          <p>Te confirmamos la gestión asociada al cargo de <strong>${cargo}</strong>.</p>
-          <p>Tu proceso de evaluación psicolaboral continúa activo en nuestro sistema.</p>
-          <br/>
-          <p>Atentamente,<br/><strong>Equipo de Reclutamiento y Selección - AquaChile</strong></p>
-        </div>
-      `,
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        accept: 'application/json',
+        'api-key': process.env.BREVO_API_KEY,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        sender: {
+          name: 'AquaChile Reclutamiento',
+          email: process.env.EMAIL_USER || 'benjamin.montoya2006@gmail.com',
+        },
+        to: [{ email, name: nombre }],
+        subject: 'Notificación de Proceso - AquaChile',
+        htmlContent: `
+          <div style="font-family: Arial, sans-serif; color: #333;">
+            <h2 style="color: #0d3c61;">Hola ${nombre},</h2>
+            <p>Te confirmamos la gestión asociada al cargo de <strong>${cargo}</strong>.</p>
+            ${fecha ? `<p><strong>Fecha:</strong> ${fecha}${hora ? ` a las ${hora}` : ''}</p>` : ''}
+            ${notas ? `<p><strong>Detalles:</strong> ${notas}</p>` : ''}
+            <p>Tu proceso de evaluación psicolaboral continúa activo en nuestro sistema.</p>
+            <br/>
+            <p>Atentamente,<br/><strong>Equipo de Reclutamiento y Selección - AquaChile</strong></p>
+          </div>
+        `,
+      }),
     });
-    console.log('Correo enviado OK:', info.messageId);
-    return res.status(200).json({ success: true, messageId: info.messageId });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error('ERROR BREVO API:', data);
+      return res.status(response.status).json({ success: false, error: data.message || data });
+    }
+
+    console.log('Correo enviado con éxito vía Brevo:', data.messageId);
+    return res.status(200).json({ success: true, messageId: data.messageId });
   } catch (error) {
-    console.error('ERROR SMTP GMAIL:', error);
+    console.error('ERROR DE RED BREVO:', error);
     return res.status(500).json({ success: false, error: error.message });
   }
 });
