@@ -4,7 +4,6 @@ import path from 'path';
 import { createRequire } from 'module';
 import express from 'express';
 import cors from 'cors';
-import { Resend } from 'resend';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
@@ -12,13 +11,21 @@ import mammoth from 'mammoth';
 import { verificarToken, permitirRoles } from './middlewares/auth.js';
 import { configurarSwagger } from './swagger.js';
 import { uploadCV } from './middlewares/uploadCV.js';
+import nodemailer from 'nodemailer';
 
 const require = createRequire(import.meta.url);
 const pdfParse = require('pdf-parse');
 
 const app = express();
 const prisma = new PrismaClient();
-const resend = new Resend(process.env.RESEND_API_KEY);
+
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
 
 app.use(cors());
 app.use(express.json());
@@ -48,7 +55,7 @@ async function extraerTextoDesdeBuffer(buffer, nombreArchivo) {
 }
 
 // ==========================================
-// 0. HEALTH CHECK & WARM-UP (DESPERTAR RENDER + NEON (evitar demora al iniciar sesión))
+// 0. HEALTH CHECK & WARM-UP (DESPERTAR RENDER + NEON)
 // ==========================================
 app.get('/api/health', async (req, res) => {
   try {
@@ -58,10 +65,6 @@ app.get('/api/health', async (req, res) => {
     res.status(503).json({ status: 'warming_up', error: error.message });
   }
 });
-
-
-
-
 
 // ==========================================
 // 1. AUTENTICACIÓN (JWT)
@@ -353,30 +356,66 @@ app.patch('/api/evaluaciones/:id', verificarToken, async (req, res) => {
   }
 });
 
+app.delete('/api/postulaciones/:id', verificarToken, permitirRoles('ANALISTA'), async (req, res) => {
+  const id = Number(req.params.id);
+  try {
+    const postulacion = await prisma.postulacion.findUnique({
+      where: { id },
+      include: { postulante: { include: { _count: { select: { postulaciones: true } } } } },
+    });
+
+    if (!postulacion) {
+      return res.status(404).json({ error: 'No se encontró la postulación en la base de datos.' });
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.solicitudEvaluacion.deleteMany({
+        where: { postulacionId: id },
+      });
+
+      await tx.postulacion.delete({
+        where: { id },
+      });
+
+      if (postulacion.postulante?._count?.postulaciones <= 1) {
+        await tx.postulante.delete({
+          where: { id: postulacion.postulanteId },
+        });
+      }
+    });
+
+    return res.json({ mensaje: 'Candidato y postulación eliminados permanentemente.' });
+  } catch (error) {
+    console.error('Error al eliminar postulación:', error);
+    return res.status(500).json({ error: 'No se pudo eliminar la postulación: ' + error.message });
+  }
+});
+
 // ==========================================
-// 4. NOTIFICACIONES POR CORREO (RESEND)
+// 4. NOTIFICACIONES POR CORREO (GMAIL SMTP - NODEMAILER)
 // ==========================================
 
 app.post('/api/enviar-confirmacion', async (req, res) => {
   const { nombre, email, cargo } = req.body;
 
   try {
-    const data = await resend.emails.send({
-      from: 'AquaChile Reclutamiento <onboarding@resend.dev>',
-      to: [email],
-      subject: 'Confirmación de Postulación - AquaChile',
+    const info = await transporter.sendMail({
+      from: `"AquaChile Reclutamiento" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: 'Notificación de Proceso - AquaChile',
       html: `
         <div style="font-family: Arial, sans-serif; color: #333;">
           <h2 style="color: #0d3c61;">Hola ${nombre},</h2>
-          <p>Te confirmamos que hemos recibido tus antecedentes para el cargo de <strong>${cargo}</strong>.</p>
-          <p>Tu proceso de evaluación se encuentra iniciado.</p>
+          <p>Te confirmamos la gestión asociada al cargo de <strong>${cargo}</strong>.</p>
+          <p>Tu proceso de evaluación psicolaboral continúa activo en nuestro sistema.</p>
           <br/>
           <p>Atentamente,<br/><strong>Equipo de Reclutamiento y Selección - AquaChile</strong></p>
         </div>
       `,
     });
-    return res.status(200).json({ success: true, data });
+    return res.status(200).json({ success: true, messageId: info.messageId });
   } catch (error) {
+    console.error('Error enviando correo con Gmail SMTP:', error);
     return res.status(500).json({ success: false, error: error.message });
   }
 });
