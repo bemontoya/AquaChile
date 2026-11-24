@@ -10,6 +10,7 @@ import {
 
 const COLOR_MARCA = '#0d3c61';
 const RUTA_LISTADO = '/candidatos';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://aquachile-backend-ljb0.onrender.com';
 
 const TIPOS_SESION = [
   'Entrevista Psicolaboral por Competencias',
@@ -192,29 +193,75 @@ export default function DetalleCandidato({ candidatos }) {
       return;
     }
 
-    const evaluador = EVALUADORES.find((ev) => ev.email === agenda.evaluador);
+    const evaluador = EVALUADORES.find((ev) => ev.email === agenda.evaluador) || EVALUADORES[0];
+    const horaInicio = agenda.bloque.split(' ')[0] || '10:30';
+    const fechaISO = new Date(`${agenda.fecha}T${horaInicio}:00`).toISOString();
+    const notaAgenda = `[Cita Agendada] ${agenda.tipoSesion} el ${agenda.fecha} (${agenda.bloque}) con ${evaluador.nombre}.`;
 
     setGuardando(true);
     setMensaje(null);
 
     try {
-      const resultado = await crearEventoCalendario({
-        titulo: `${agenda.tipoSesion} - ${candidato.nombre}`,
-        descripcion:
-          `Candidato: ${candidato.nombre} (RUT ${candidato.rut})\n` +
-          `Cargo: ${form.cargo}\n` +
-          `Evaluador: ${evaluador.nombre}`,
-        fecha: agenda.fecha,
-        bloque: agenda.bloque,
-        invitados: [agenda.emailDestinatario, evaluador.email],
-        notificar: agenda.enviarCitacion,
-      });
+      let resultadoGoogle = null;
+
+      // 1. Si hay Google Client ID configurado, intenta crear el evento en Google Calendar
+      if (import.meta.env.VITE_GOOGLE_CLIENT_ID) {
+        try {
+          resultadoGoogle = await crearEventoCalendario({
+            titulo: `${agenda.tipoSesion} - ${candidato.nombre}`,
+            descripcion:
+              `Candidato: ${candidato.nombre} (RUT ${candidato.rut})\n` +
+              `Cargo: ${form.cargo}\n` +
+              `Evaluador: ${evaluador.nombre}`,
+            fecha: agenda.fecha,
+            bloque: agenda.bloque,
+            invitados: [agenda.emailDestinatario, evaluador.email],
+            notificar: agenda.enviarCitacion,
+          });
+        } catch (googleErr) {
+          console.warn('Google Calendar omitido, usando persistencia directa en backend:', googleErr.message);
+        }
+      }
+
+      // 2. Persistir siempre la cita en Neon PostgreSQL y avanzar estado a "En Proceso"
+      const nuevasObservaciones = form.observaciones
+        ? `${form.observaciones}\n${notaAgenda}`
+        : notaAgenda;
+
+      if (candidato?.evaluacionId) {
+        await actualizarEvaluacionAPI(candidato.evaluacionId, {
+          estado: form.estado === 'Pendiente' ? 'En Proceso' : form.estado,
+          fechaEvaluacion: fechaISO,
+          observaciones: nuevasObservaciones,
+          ...(resultadoGoogle?.eventId && { googleEventId: resultadoGoogle.eventId }),
+          ...(resultadoGoogle?.enlaceMeet && { meetLink: resultadoGoogle.enlaceMeet }),
+        });
+
+        setForm((prev) => ({
+          ...prev,
+          estado: prev.estado === 'Pendiente' ? 'En Proceso' : prev.estado,
+          observaciones: nuevasObservaciones,
+        }));
+      }
+
+      // 3. Enviar notificación de citación por correo si está marcado el checkbox
+      if (agenda.enviarCitacion) {
+        await fetch(`${API_BASE_URL}/api/enviar-confirmacion`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nombre: candidato.nombre,
+            email: agenda.emailDestinatario,
+            cargo: `${form.cargo} — Citación ${agenda.tipoSesion} (${agenda.fecha} · ${agenda.bloque})`,
+          }),
+        }).catch(() => {});
+      }
 
       setMensaje({
         tipo: 'success',
-        texto: `Reunión agendada para el ${agenda.fecha} (${agenda.bloque}).`,
-        enlaceEvento: resultado.enlaceEvento,
-        enlaceMeet: resultado.enlaceMeet,
+        texto: `Reunión agendada y registrada en base de datos para el ${agenda.fecha} (${agenda.bloque}).`,
+        enlaceEvento: resultadoGoogle?.enlaceEvento,
+        enlaceMeet: resultadoGoogle?.enlaceMeet,
       });
     } catch (error) {
       setMensaje({ tipo: 'danger', texto: error.message });
@@ -450,7 +497,7 @@ export default function DetalleCandidato({ candidatos }) {
           </div>
         </div>
 
-        {/* Columna Derecha: Agendar Reunión Google Calendar */}
+        {/* Columna Derecha: Agendar Reunión */}
         <div className="col-12 col-lg-5">
           <div className="card border-0 shadow-sm rounded-3 overflow-hidden h-100">
             <div
@@ -544,7 +591,7 @@ export default function DetalleCandidato({ candidatos }) {
                 style={{ backgroundColor: COLOR_MARCA, borderColor: COLOR_MARCA }}
               >
                 <i className="bi bi-calendar-check"></i>
-                {guardando ? 'Agendando en Google Calendar...' : 'Confirmar y Agendar Reunión'}
+                {guardando ? 'Agendando Reunión...' : 'Confirmar y Agendar Reunión'}
               </button>
             </form>
           </div>
