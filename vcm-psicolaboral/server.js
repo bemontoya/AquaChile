@@ -20,7 +20,9 @@ const app = express();
 const prisma = new PrismaClient();
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 465,
+  secure: true,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
@@ -397,6 +399,12 @@ app.delete('/api/postulaciones/:id', verificarToken, permitirRoles('ANALISTA'), 
 
 app.post('/api/enviar-confirmacion', async (req, res) => {
   const { nombre, email, cargo } = req.body;
+  console.log('Intentando enviar correo a:', email, 'desde:', process.env.EMAIL_USER);
+
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    console.error('ERROR SMTP: Faltan EMAIL_USER o EMAIL_PASS en variables de entorno.');
+    return res.status(500).json({ success: false, error: 'Faltan EMAIL_USER o EMAIL_PASS en Render.' });
+  }
 
   try {
     const info = await transporter.sendMail({
@@ -413,9 +421,10 @@ app.post('/api/enviar-confirmacion', async (req, res) => {
         </div>
       `,
     });
+    console.log('Correo enviado OK:', info.messageId);
     return res.status(200).json({ success: true, messageId: info.messageId });
   } catch (error) {
-    console.error('Error enviando correo con Gmail SMTP:', error);
+    console.error('ERROR SMTP GMAIL:', error);
     return res.status(500).json({ success: false, error: error.message });
   }
 });
