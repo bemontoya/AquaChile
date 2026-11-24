@@ -1,107 +1,69 @@
-# Plataforma de Gestión de Evaluaciones Psicolaborales — AquaChile (MVP Frontend)
+# Plataforma Integral de Gestión de Evaluaciones Psicolaborales — AquaChile
 
-Este proyecto corresponde al desarrollo del MVP del frontend para la gestión y seguimiento de evaluaciones psicolaborales de **AquaChile**.
+Plataforma web desarrollada para la gestión, seguimiento y evaluación psicolaboral de candidatos en procesos de reclutamiento y selección de **AquaChile**.
 
-El sistema permite la administración de candidatos, el registro de solicitudes y la visualización de indicadores clave a través de un tablero interactivo tipo Kanban y vistas tabulares, optimizando el flujo de reclutamiento y selección en las distintas áreas y plantas operativas.
-
----
-
-
-## Integrantes:
--- Javier Cataldo
--- Benjamin Montoya
-
-##  Tecnologías Utilizadas
-
-* **React 18** (con Vite como herramienta de construcción)
-* **React Router DOM v6** (para la navegación entre vistas SPA)
-* **Bootstrap 5 & Bootstrap Icons** (para maquetación web responsive y diseño de UI)
-* **@hello-pangea/dnd** (para la interacción Drag & Drop en el tablero Kanban)
-* **Vitest & React Testing Library** (para la suite de pruebas unitarias)
+El sistema integra un portal público de postulación con carga de currículums (PDF/DOCX), gestión de ofertas laborales, administración de candidatos con almacenamiento persistente de archivos, tablero Kanban interactivo, agendamiento de entrevistas con Google Meet, notificaciones automáticas por correo electrónico y un **Asistente de Inteligencia Artificial** con supervisión humana para el análisis de perfiles y generación de preguntas conductuales (metodología STAR).
 
 ---
 
-##  Estructura del Proyecto
+## Integrantes
+- **Javier Cataldo**
+- **Benjamín Montoya**
+
+---
+
+## Tecnologías Utilizadas
+
+### Frontend
+- **React 18** + **Vite** (entorno de desarrollo y empaquetado SPA)
+- **React Router DOM v6** (enrutamiento dinámico y protección de vistas por rol)
+- **Bootstrap 5 & Bootstrap Icons** (diseño responsivo e interfaz de usuario)
+- **@hello-pangea/dnd** (interacción Drag & Drop para el tablero Kanban de solicitudes)
+
+### Backend y Seguridad
+- **Node.js & Express** (servidor API RESTful)
+- **JSON Web Tokens (JWT)** & **bcryptjs** (autenticación y control de acceso basado en roles: `ANALISTA` y `EVALUADOR`)
+- **Multer** (recepción y validación de archivos CV en formato PDF y DOCX)
+- **pdf-parse & Mammoth** (extracción automática de texto plano desde currículums en PDF y Word con anonimización de datos sensibles/PII)
+- **Swagger UI (`swagger-jsdoc` / `swagger-ui-express`)** (documentación interactiva de endpoints en `/api-docs`)
+- **CORS & dotenv** (gestión de políticas de origen cruzado y variables de entorno)
+
+### Base de Datos y ORM
+- **PostgreSQL (Neon Serverless)** (base de datos relacional en la nube)
+- **Prisma ORM** (modelado de esquema, migraciones y consultas tipadas)
+- **Supabase**
+
+### Servicios Externos e Integraciones Cloud
+- **Groq Cloud API (LLM)** (motor de Inteligencia Artificial para análisis orientativo de adecuación al perfil y sugerencia de preguntas de entrevista por competencias)
+- **Brevo Transactional Email API (HTTP/443)** (envío instantáneo de citaciones y notificaciones por correo electrónico con enlace de videollamada)
+- **Google Calendar API & Google Meet** (agendamiento de entrevistas y generación de enlaces de reunión)
+- **Render & Vercel** (despliegue continuo en producción para Backend y Frontend respectivamente)
+
+### Testing y Calidad de Software
+- **Vitest & React Testing Library** (pruebas unitarias y de componentes en frontend)
+- **Supertest / Vitest** (pruebas de integración de endpoints en backend)
+
+---
+
+## Estructura del Proyecto
 
 ```text
-src/
-├── assets/          # Recursos estáticos e imágenes
-├── components/      # Componentes reutilizables UI (CandidatosTabla, FormSolicitud, KanbanSolicitudes, etc.)
-├── data/            # Datos simulados (Mocks) y catálogos estáticos (candidatosData, solicitudesData, catalogos)
-├── App.jsx          # Componente principal y configuración de rutas
-├── main.jsx         # Punto de entrada de React con BrowserRouter
-└── setupTests.js    # Configuración de entornos de pruebas (Jest-DOM)
-```
-
----
-
-##  Requisitos e Instalación
-
-
-
-### Pasos para ejecutar en entorno local
-
-1. **Clonar el repositorio:**
-   ```bash
-   git clone <URL_DEL_REPOSITO_GITHUB>
-   cd vcm-psicolaboral
-   ```
-
-2. **Instalar dependencias:**
-   ```bash
-   npx install
-   ```
-
-3. **Iniciar el servidor de desarrollo:**
-   ```bash
-   npx run dev
-   ```
-   Abre la dirección que indica la consola (generalmente `http://localhost:5173`) en tu navegador.
-
----
-
-##  Ejecución de Pruebas Unitarias (Testing con Vitest)
-
-Las pruebas automatizadas del proyecto verifican el correcto renderizado de los componentes, la gestión de props y la navegación.
-
-### Pasos para ejecutar los Tests:
-
-1. **Asegurarte de tener las dependencias de prueba instaladas:**
-   Si aún no las has instalado en el proyecto, ejecuta:
-   ```bash
-   npm install -D vitest @testing-library/react @testing-library/jest-dom jsdom
-   ```
-
-2. **Ejecutar los tests en modo watch (desarrollo):**
-   Mantiene las pruebas escuchando cambios en el código.
-   ```bash
-   npm run test
-   ```
-
-3. **Ejecutar una sola pasada de tests (Ideal para capturas de pantalla de evidencia):**
-   Ejecuta la suite completa, genera la métrica en consola y finaliza el proceso inmediatamente.
-   ```bash
-   npx vitest run
-   ```
-
-### Suites de Pruebas Incluidas
-* `src/components/CandidatosTabla.test.jsx`: Valida la renderización dinámica de los datos del candidato.
-* `src/components/SubHeader.test.jsx`: Verifica la correcta visualización de contadores y resumen de navegación.
-* `src/components/GraficoPorArea.test.jsx`: Comprueba la distribución y estructura de las barras indicadoras por área.
-
-## Ejecución de de Resend
-
-1. **Entrar a la carpeta del proyecto:**
-   ```bash
-   cd vcm-psicolaboral
-   ```
-
-2. **Instalar el servidor Express, CORS y el SDK de Resend:**
-   ```bash
-   npm install express cors resend
-   ```
-
-3. **Instalar dotenv para la lectura del archivo .env:**
-   ```bash
-   npm install dotenv
-   ```
+vcm-psicolaboral/
+├── prisma/
+│   └── schema.prisma            # Modelos de BD (Usuario, Oferta, Postulante, Postulacion, SolicitudEvaluacion)
+├── middlewares/
+│   ├── auth.js                  # Verificación de token JWT y permisos por rol
+│   └── uploadCV.js              # Configuración de Multer para carga segura de CVs
+├── src/
+│   ├── assets/                  # Recursos estáticos e imágenes corporativas
+│   ├── components/              # Componentes UI (CandidatosTabla, DetalleCandidato, KanbanSolicitudes, etc.)
+│   ├── data/                    # Catálogos y datos de referencia
+│   ├── services/                # Cliente HTTP y consumo de API (api.js)
+│   ├── utils/                   # Integración con Google Calendar / Meet (googleCalendar.js)
+│   ├── App.jsx                  # Configuración principal de rutas y estado global
+│   ├── main.jsx                 # Punto de entrada de la aplicación React
+│   └── setupTests.js            # Configuración de entorno de pruebas
+├── server.js                    # Servidor principal Express, endpoints API, IA y Brevo
+├── swagger.js                   # Configuración de documentación OpenAPI / Swagger
+├── package.json                 # Dependencias y scripts de ejecución
+└── .env                         # Variables de entorno (no versionado)
