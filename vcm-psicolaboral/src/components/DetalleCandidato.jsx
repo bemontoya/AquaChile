@@ -223,7 +223,10 @@ export default function DetalleCandidato({ candidatos }) {
         }
       }
 
-      // 2. Persistir siempre la cita en Neon PostgreSQL y avanzar estado a "En Proceso"
+      // 2. Obtener enlace de Google Meet (desde Google Calendar o enlace de sala directo)
+      const enlaceMeetFinal = resultadoGoogle?.enlaceMeet || 'https://meet.google.com/new';
+
+      // 3. Persistir siempre la cita en Neon PostgreSQL y avanzar estado a "En Proceso"
       const nuevasObservaciones = form.observaciones
         ? `${form.observaciones}\n${notaAgenda}`
         : notaAgenda;
@@ -234,7 +237,7 @@ export default function DetalleCandidato({ candidatos }) {
           fechaEvaluacion: fechaISO,
           observaciones: nuevasObservaciones,
           ...(resultadoGoogle?.eventId && { googleEventId: resultadoGoogle.eventId }),
-          ...(resultadoGoogle?.enlaceMeet && { meetLink: resultadoGoogle.enlaceMeet }),
+          meetLink: enlaceMeetFinal,
         });
 
         setForm((prev) => ({
@@ -244,7 +247,7 @@ export default function DetalleCandidato({ candidatos }) {
         }));
       }
 
-      // 3. Enviar notificación de citación por correo si está marcado el checkbox
+      // 4. Enviar notificación de citación por correo si está marcado el checkbox
       if (agenda.enviarCitacion) {
         await fetch(`${API_BASE_URL}/api/enviar-confirmacion`, {
           method: 'POST',
@@ -253,6 +256,9 @@ export default function DetalleCandidato({ candidatos }) {
             nombre: candidato.nombre,
             email: agenda.emailDestinatario,
             cargo: `${form.cargo} — Citación ${agenda.tipoSesion} (${agenda.fecha} · ${agenda.bloque})`,
+            fecha: agenda.fecha,
+            hora: agenda.bloque,
+            meetLink: enlaceMeetFinal,
           }),
         }).catch(() => {});
       }
@@ -261,7 +267,7 @@ export default function DetalleCandidato({ candidatos }) {
         tipo: 'success',
         texto: `Reunión agendada y registrada en base de datos para el ${agenda.fecha} (${agenda.bloque}).`,
         enlaceEvento: resultadoGoogle?.enlaceEvento,
-        enlaceMeet: resultadoGoogle?.enlaceMeet,
+        enlaceMeet: enlaceMeetFinal,
       });
     } catch (error) {
       setMensaje({ tipo: 'danger', texto: error.message });

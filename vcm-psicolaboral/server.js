@@ -387,13 +387,13 @@ app.delete('/api/postulaciones/:id', verificarToken, permitirRoles('ANALISTA'), 
 // ==========================================
 
 app.post(['/api/enviar-confirmacion', '/api/api/enviar-confirmacion'], async (req, res) => {
-  const { nombre, email, cargo, fecha, hora, notas } = req.body;
+  const { nombre, email, cargo, fecha, hora, notas, meetLink } = req.body;
 
   if (!process.env.BREVO_API_KEY) {
     return res.status(500).json({ success: false, error: 'Falta BREVO_API_KEY en Render.' });
   }
 
-  console.log(`Enviando correo vía Brevo API a: ${email}`);
+  console.log(`Enviando correo vía Brevo API a: ${email} | Meet: ${meetLink || 'Sin enlace'}`);
 
   try {
     const response = await fetch('https://api.brevo.com/v3/smtp/email', {
@@ -409,13 +409,22 @@ app.post(['/api/enviar-confirmacion', '/api/api/enviar-confirmacion'], async (re
           email: process.env.EMAIL_USER || 'benjamin.montoya2006@gmail.com',
         },
         to: [{ email, name: nombre }],
-        subject: 'Notificación de Proceso - AquaChile',
+        subject: 'Citación de Entrevista Psicolaboral - AquaChile',
         htmlContent: `
-          <div style="font-family: Arial, sans-serif; color: #333;">
+          <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.5;">
             <h2 style="color: #0d3c61;">Hola ${nombre},</h2>
             <p>Te confirmamos la gestión asociada al cargo de <strong>${cargo}</strong>.</p>
             ${fecha ? `<p><strong>Fecha:</strong> ${fecha}${hora ? ` a las ${hora}` : ''}</p>` : ''}
             ${notas ? `<p><strong>Detalles:</strong> ${notas}</p>` : ''}
+            ${
+              meetLink
+                ? `<div style="margin: 20px 0; padding: 14px; background-color: #f0f7ff; border-left: 4px solid #0d3c61; border-radius: 4px;">
+                     <p style="margin: 0 0 8px 0;"><strong>Enlace de videollamada (Google Meet):</strong></p>
+                     <a href="${meetLink}" target="_blank" style="display: inline-block; padding: 10px 18px; background-color: #0d3c61; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: bold;">Unirse a la reunión en Google Meet</a>
+                     <p style="margin: 8px 0 0 0; font-size: 12px; color: #555;">O copia este enlace: <a href="${meetLink}">${meetLink}</a></p>
+                   </div>`
+                : ''
+            }
             <p>Tu proceso de evaluación psicolaboral continúa activo en nuestro sistema.</p>
             <br/>
             <p>Atentamente,<br/><strong>Equipo de Reclutamiento y Selección - AquaChile</strong></p>
